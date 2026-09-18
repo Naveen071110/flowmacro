@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoMacro - Security & Credential Test Harness</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #09090b;
+      color: #f4f4f5;
+      min-height: 100vh;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 860px;
+    }
+
+    header {
+      margin-bottom: 32px;
+      border-bottom: 1px solid #27272a;
+      padding-bottom: 20px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 600;
+      background: rgba(34, 197, 94, 0.1);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fafafa;
+      margin-bottom: 6px;
+    }
+
+    p.subtitle {
+      font-size: 14px;
+      color: #a1a1aa;
+      line-height: 1.5;
+    }
+
+    /* Result Banner */
+    #login-success {
+      display: none;
+      margin-bottom: 24px;
+      padding: 16px 20px;
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid #22c55e;
+      border-radius: 8px;
+      color: #4ade80;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+      animation: fadeIn 0.2s ease-in;
+    }
+
+    #login-success.visible {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: #121215;
+      border: 1px solid #27272a;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #f4f4f5;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-desc {
+      font-size: 12px;
+      color: #71717a;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #d4d4d8;
+      margin-bottom: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    input, select {
+      width: 100%;
+      height: 38px;
+      padding: 0 12px;
+      border-radius: 6px;
+      border: 1px solid #27272a;
+      background: #09090b;
+      color: #fafafa;
+      font-size: 13px;
+      font-family: inherit;
+      transition: all 0.15s ease;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: #22c55e;
+      box-shadow: 0 0 0 1px #22c55e;
+    }
+
+    input[type="password"] {
+      letter-spacing: 0.1em;
+    }
+
+    button.btn {
+      width: 100%;
+      height: 38px;
+      border-radius: 6px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: #22c55e;
+      color: #09090b;
+    }
+
+    .btn-primary:hover {
+      background: #16a34a;
+      color: #ffffff;
+    }
+
+    .btn-secondary {
+      background: #27272a;
+      color: #f4f4f5;
+      border: 1px solid #3f3f46;
+    }
+
+    .btn-secondary:hover {
+      background: #3f3f46;
+    }
+
+    /* Verification Console */
+    .console-card {
+      background: #070709;
+      border: 1px solid #27272a;
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+
+    .console-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1f1f23;
+    }
+
+    .console-title {
+      font-size: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 600;
+      color: #a1a1aa;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    #console-log {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      color: #71717a;
+      line-height: 1.6;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .log-entry {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .log-time {
+      color: #52525b;
+      shrink: 0;
+    }
+
+    .log-success {
+      color: #4ade80;
+    }
+
+    .log-info {
+      color: #38bdf8;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">TEST HARNESS ACTIVE</div>
+      <h1>AutoMacro Credential & Replay Test Page</h1>
+      <p class="subtitle">
+        Local sandbox to verify zero-trust password masking during recording,
+        secure session execution during replay, and clean code generation.
+      </p>
+    </header>
+
+    <!-- Dynamic Result Container -->
+    <div id="login-success">
+      <span id="login-success-text">AUTH_SUCCESSFUL: [Username]</span>
+      <button class="btn btn-secondary" style="width: auto; height: 26px; font-size: 11px; padding: 0 10px;" onclick="resetTestState()">Reset</button>
+    </div>
+
+    <div class="grid">
+      <!-- 1. Standard Login Form -->
+      <div class="card">
+        <div class="card-title">1. Standard Login Form</div>
+        <div class="card-desc">Tests standard username + input[type="password"] detection and replay</div>
+
+        <form id="standard-login-form">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              data-testid="username-input"
+              placeholder="e.g. admin_tester"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password (type="password")</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              data-testid="password-input"
+              placeholder="••••••••••••"
+              required
+            />
+          </div>
+
+          <button type="submit" id="login-submit" data-testid="login-submit" class="btn btn-primary">
+            Submit Standard Login
+          </button>
+        </form>
+      </div>
+
+      <!-- 2. Complex Auth Form -->
+      <div class="card">
+        <div class="card-title">2. Complex Auth Form</div>
+        <div class="card-desc">Tests autocomplete="current-password", email input, and dropdown selection</div>
+
+        <form id="complex-auth-form">
+          <div class="form-group">
+            <label for="complex-email">Work Email</label>
+            <input
+              type="email"
+              id="complex-email"
+              name="email"
+              data-testid="complex-email"
+              placeholder="lead@company.com"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="complex-password">Master Password</label>
+            <input
+              type="password"
+              id="complex-password"
+              name="password"
+              data-testid="complex-password"
+              placeholder="••••••••••••"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="complex-pin">Security PIN (autocomplete="current-password")</label>
+            <input
+              type="text"
+              id="complex-pin"
+              name="pin"
+              autocomplete="current-password"
+              data-testid="complex-pin"
+              placeholder="e.g. 9842"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="complex-role">Security Clearance Role</label>
+            <select id="complex-role" name="role" data-testid="complex-role">
+              <option value="lead">Principal Security Engineer</option>
+              <option value="admin">Infrastructure Admin</option>
+              <option value="qa">Lead QA Automation Engineer</option>
+            </select>
+          </div>
+
+          <button type="submit" id="complex-submit" data-testid="complex-submit" class="btn btn-primary">
+            Authenticate Complex Form
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Verification Event Console -->
+    <div class="console-card">
+      <div class="console-header">
+        <div class="console-title">DOM Validation Stream</div>
+        <button onclick="document.getElementById('console-log').innerHTML=''" class="btn btn-secondary" style="width: auto; height: 22px; font-size: 10px; padding: 0 8px;">Clear</button>
+      </div>
+      <div id="console-log">
+        <div class="log-entry">
+          <span class="log-time">[READY]</span>
+          <span>DOM initialized. Listening for AutoMacro recorder and replayer events.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function logEvent(msg, type = 'info') {
+      const logContainer = document.getElementById('console-log');
+      const time = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `
+        <span class="log-time">[${time}]</span>
+        <span class="${type === 'success' ? 'log-success' : 'log-info'}">${msg}</span>
+      `;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    function triggerSuccess(identifier, formType, passwordLength) {
+      const successDiv = document.getElementById('login-success');
+      const successText = document.getElementById('login-success-text');
+      
+      const text = `AUTH_SUCCESSFUL: ${identifier}`;
+      successText.textContent = text;
+      successDiv.classList.add('visible');
+      
+      logEvent(`SUCCESS: ${formType} submitted valid credentials. Received password [${passwordLength} characters].`, 'success');
+      logEvent(`DYNAMIC_STATE: #login-success updated -> "${text}"`, 'success');
+    }
+
+    function resetTestState() {
+      document.getElementById('login-success').classList.remove('visible');
+      document.getElementById('standard-login-form').reset();
+      document.getElementById('complex-auth-form').reset();
+      logEvent('State reset to clean initial conditions.');
+    }
+
+    // Standard Login Handler
+    document.getElementById('standard-login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        logEvent('Standard login rejected: Missing username or password.', 'info');
+        return;
+      }
+
+      triggerSuccess(username, 'Standard Login Form', password.length);
+    });
+
+    // Complex Auth Handler
+    document.getElementById('complex-auth-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('complex-email').value.trim();
+      const password = document.getElementById('complex-password').value;
+      const pin = document.getElementById('complex-pin').value;
+      const role = document.getElementById('complex-role').value;
+
+      if (!email || !password || !pin) {
+        logEvent('Complex auth rejected: Required fields incomplete.', 'info');
+        return;
+      }
+
+      triggerSuccess(email, `Complex Auth Form (${role})`, password.length);
+    });
+  </script>
+</body>
+</html>
