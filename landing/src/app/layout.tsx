@@ -9,10 +9,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "AutoMacro IDE | Zero-Trust Web Automation & Selenium Replay Engine",
+  title: "FlowMacro — Web Automation & Selenium IDE Engine",
   description:
-    "Record web actions, mask passwords with local AES-256 encryption, replay in isolated tabs, and export clean Playwright, Puppeteer, or Python Selenium scripts in seconds.",
+    "Record web workflows, mask passwords with local AES-256 encryption, replay in isolated tabs, and export clean Playwright, Puppeteer, or Python Selenium scripts in seconds.",
   keywords: [
+    "FlowMacro",
     "Chrome Extension",
     "Selenium IDE alternative",
     "Playwright code generator",
@@ -23,22 +24,22 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Naveen Guru" }],
   openGraph: {
-    title: "AutoMacro IDE | Record Web Actions. Mask Passwords. Replay in Seconds.",
+    title: "FlowMacro — Record Web Actions. Mask Passwords. Replay in Seconds.",
     description:
       "Developer-first browser automation with dedicated controller window, zero password leakage, and instant multi-framework code generation.",
-    siteName: "AutoMacro IDE",
+    siteName: "FlowMacro",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "AutoMacro IDE | Zero-Trust Browser Automation",
+    title: "FlowMacro — Zero-Trust Browser Automation & Selenium IDE",
     description:
       "Record web actions, mask passwords with local AES-256 encryption, replay in isolated tabs, and export clean Playwright & Selenium scripts.",
   },
   icons: {
-    icon: "/automacro_favicon.png",
+    icon: "/flowmacro_store_icon_128x128.png",
     shortcut: "/favicon.ico",
-    apple: "/automacro_favicon.png",
+    apple: "/flowmacro_store_icon_128x128.png",
   },
 };
 

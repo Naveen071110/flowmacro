@@ -14,7 +14,7 @@ export default function PrivacyPolicy() {
             className="flex items-center gap-2 text-xs font-mono text-slate-400 hover:text-emerald-400 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to AutoMacro IDE</span>
+            <span>Back to FlowMacro IDE</span>
           </Link>
           <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
             <ShieldCheck className="w-3.5 h-3.5" />
