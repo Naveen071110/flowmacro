@@ -21,15 +21,12 @@ import {
   ExternalLink,
   Code2,
   FolderOpen,
-  FileCode,
   Undo,
   Redo,
   HelpCircle,
   Check,
-  Lock,
   X,
   Key,
-  Layers,
   Monitor,
 } from 'lucide-react';
 import {
@@ -94,7 +91,7 @@ export default function App() {
   const [redoStack, setRedoStack] = useState<TestSuite[]>([]);
 
   // Version string (dynamically loaded from manifest.json)
-  const [appVersion, setAppVersion] = useState<string>('v1.0.1');
+  const [appVersion, setAppVersion] = useState<string>('v1.0.2');
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,7 +101,7 @@ export default function App() {
   useEffect(() => {
     try {
       const manifest = chrome.runtime?.getManifest ? chrome.runtime.getManifest() : null;
-      const versionStr = manifest?.version ? `v${manifest.version}` : 'v1.0.1';
+      const versionStr = manifest?.version ? `v${manifest.version}` : 'v1.0.2';
       setAppVersion(versionStr);
       document.querySelectorAll('.app-version').forEach((el) => {
         el.textContent = versionStr;
@@ -134,32 +131,7 @@ export default function App() {
     };
   }, []);
 
-  // Global Keyboard Shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+N, Ctrl+O, Ctrl+E)
-  useEffect(() => {
-    const handleShortcuts = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
-        e.preventDefault();
-        handleUndo();
-      } else if (
-        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') ||
-        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z')
-      ) {
-        e.preventDefault();
-        handleRedo();
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
-        e.preventDefault();
-        handleNewSuite();
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
-        e.preventDefault();
-        handleOpenFilePicker();
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
-        e.preventDefault();
-        setShowExportModal(true);
-      }
-    };
-    window.addEventListener('keydown', handleShortcuts);
-    return () => window.removeEventListener('keydown', handleShortcuts);
-  }, [undoStack, redoStack, suite]);
+
 
   // Auto-scroll logs
   useEffect(() => {
@@ -181,7 +153,7 @@ export default function App() {
 
     // Check initial background session & recording state
     chrome.runtime?.sendMessage?.({ type: 'GET_SESSION_STATE' }, (state: ReplaySessionState) => {
-      if (state && chrome.runtime?.lastError === undefined) {
+      if (state && !chrome.runtime.lastError) {
         setReplayState(state);
         if (state.status === 'recording') {
           setIsRecording(true);
@@ -190,7 +162,7 @@ export default function App() {
     });
 
     chrome.runtime?.sendMessage?.({ type: 'GET_RECORDING_STATE' }, (res: any) => {
-      if (res && chrome.runtime?.lastError === undefined) {
+      if (res && !chrome.runtime?.lastError) {
         if (typeof res.isRecording === 'boolean') setIsRecording(res.isRecording);
         if (typeof res.isPaused === 'boolean') setIsRecordingPaused(res.isPaused);
       }
@@ -199,7 +171,7 @@ export default function App() {
     // Storage fallback for active recording
     const storage = chrome.storage?.session || chrome.storage?.local;
     storage?.get?.(['isRecording', 'isPaused'], (res: any) => {
-      if (res && chrome.runtime?.lastError === undefined) {
+      if (res && !chrome.runtime?.lastError) {
         if (typeof res.isRecording === 'boolean') setIsRecording(res.isRecording);
         if (typeof res.isPaused === 'boolean') setIsRecordingPaused(res.isPaused);
       }
@@ -521,6 +493,47 @@ export default function App() {
     };
     reader.readAsText(file);
   };
+
+  // Refs to always hold the latest handler references (avoids stale closures)
+  const handleUndoRef = useRef(handleUndo);
+  const handleRedoRef = useRef(handleRedo);
+  const handleNewSuiteRef = useRef(handleNewSuite);
+  const handleOpenFilePickerRef = useRef(handleOpenFilePicker);
+  handleUndoRef.current = handleUndo;
+  handleRedoRef.current = handleRedo;
+  handleNewSuiteRef.current = handleNewSuite;
+  handleOpenFilePickerRef.current = handleOpenFilePicker;
+
+  // Global Keyboard Shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+N, Ctrl+O, Ctrl+E)
+  useEffect(() => {
+    const handleShortcuts = (e: KeyboardEvent) => {
+      // Don't intercept shortcuts when user is typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        handleUndoRef.current();
+      } else if (
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'z')
+      ) {
+        e.preventDefault();
+        handleRedoRef.current();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        handleNewSuiteRef.current();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') {
+        e.preventDefault();
+        handleOpenFilePickerRef.current();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        setShowExportModal(true);
+      }
+    };
+    window.addEventListener('keydown', handleShortcuts);
+    return () => window.removeEventListener('keydown', handleShortcuts);
+  }, []);
 
   // Open Target Tab Selector Modal
   const handleOpenTabSelector = () => {
