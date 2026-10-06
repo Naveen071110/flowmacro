@@ -28,6 +28,10 @@ export interface SeleniumCommand {
   envVarName?: string;
   errorMessage?: string;
   durationMs?: number;
+  frameId?: number;
+  isTopFrame?: boolean;
+  isShadow?: boolean;
+  shadowHost?: string;
 }
 
 export interface TestSuite {

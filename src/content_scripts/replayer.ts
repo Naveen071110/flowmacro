@@ -54,11 +54,70 @@ import { decryptSecret } from '../shared/crypto';
     throw new Error(`Target not found in DOM within ${timeoutMs}ms. Attempted locators: [${triedList}]`);
   }
 
+  // ============================================================================
+  // SHADOW DOM PIERCING & DEEP RESOLUTION (FIX 1)
+  // ============================================================================
+  function resolveShadowPierceTarget(target: string, rootDoc: Document = document): Element | null {
+    try {
+      const clean = target.replace(/^shadow=/, '').replace(/^css=/, '');
+      const parts = clean.split('>>>').map((p) => p.trim()).filter(Boolean);
+      if (parts.length === 0) return null;
+
+      let currentContext: Document | Element | ShadowRoot = rootDoc;
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (i < parts.length - 1) {
+          // Looking for a shadow host
+          const host: Element | null =
+            queryDomInDocument(part, currentContext) || queryDomDeep(part, currentContext);
+          if (!host || !host.shadowRoot) return null;
+          currentContext = host.shadowRoot;
+        } else {
+          // Final target element inside shadow root
+          return queryDomInDocument(part, currentContext) || queryDomDeep(part, currentContext);
+        }
+      }
+    } catch (err) {
+      console.debug('[AutoMacro Replayer] Shadow pierce resolution notice:', err);
+    }
+    return null;
+  }
+
+  function queryDomDeep(target: string, root: Document | Element | ShadowRoot = document): Element | null {
+    const direct = queryDomInDocument(target, root);
+    if (direct) return direct;
+
+    try {
+      const allElements = (root as any).querySelectorAll ? (root as any).querySelectorAll('*') : [];
+      for (const el of allElements) {
+        if (el.shadowRoot) {
+          const found = queryDomDeep(target, el.shadowRoot);
+          if (found) return found;
+        }
+      }
+    } catch (deepErr) {
+      console.debug('[AutoMacro Replayer] Deep shadow search notice:', deepErr);
+    }
+
+    return null;
+  }
+
   function queryDomBySeleniumTarget(target: string, rootDoc: Document = document): Element | null {
+    // 1. If target specifies shadow-piercing locator
+    if (target.startsWith('shadow=') || target.includes(' >>> ')) {
+      const shadowEl = resolveShadowPierceTarget(target, rootDoc);
+      if (shadowEl) return shadowEl;
+    }
+
+    // 2. Direct document query
     const el = queryDomInDocument(target, rootDoc);
     if (el) return el;
 
-    // Search same-origin iframes
+    // 3. Fallback: Deep Shadow DOM search across all open shadow hosts
+    const deepEl = queryDomDeep(target, rootDoc);
+    if (deepEl) return deepEl;
+
+    // 4. Search same-origin iframes
     try {
       const iframes = Array.from(rootDoc.querySelectorAll('iframe'));
       for (const iframe of iframes) {
@@ -80,11 +139,17 @@ import { decryptSecret } from '../shared/crypto';
     return null;
   }
 
-  function queryDomInDocument(target: string, doc: Document): Element | null {
+  function queryDomInDocument(target: string, doc: Document | Element | ShadowRoot): Element | null {
     try {
+      if (!doc || typeof (doc as any).querySelector !== 'function') return null;
+
       if (target.startsWith('id=')) {
         const idVal = target.replace(/^id=/, '');
-        return doc.getElementById(idVal) || doc.querySelector(`#${CSS.escape(idVal)}`);
+        if ('getElementById' in doc && typeof (doc as Document).getElementById === 'function') {
+          const byId = (doc as Document).getElementById(idVal);
+          if (byId) return byId;
+        }
+        return doc.querySelector(`#${CSS.escape(idVal)}`);
       }
 
       if (target.startsWith('name=')) {
@@ -99,8 +164,10 @@ import { decryptSecret } from '../shared/crypto';
 
       if (target.startsWith('xpath=')) {
         const xpathVal = target.replace(/^xpath=/, '');
-        const res = doc.evaluate(xpathVal, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-        return res.singleNodeValue as Element;
+        if ('evaluate' in doc && typeof (doc as Document).evaluate === 'function') {
+          const res = (doc as Document).evaluate(xpathVal, doc as Document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          return res.singleNodeValue as Element;
+        }
       }
 
       if (target.startsWith('linkText=')) {
@@ -110,8 +177,10 @@ import { decryptSecret } from '../shared/crypto';
       }
 
       if (target.startsWith('//') || target.startsWith('(')) {
-        const res = doc.evaluate(target, doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-        return res.singleNodeValue as Element;
+        if ('evaluate' in doc && typeof (doc as Document).evaluate === 'function') {
+          const res = (doc as Document).evaluate(target, doc as Document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          return res.singleNodeValue as Element;
+        }
       }
 
       // Default to standard CSS selector

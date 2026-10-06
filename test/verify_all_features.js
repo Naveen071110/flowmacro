@@ -49,7 +49,7 @@ async function runTestSuite() {
 
   test('Manifest V3 required permissions are present', () => {
     const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf-8'));
-    const required = ['storage', 'tabs', 'webNavigation', 'scripting', 'activeTab'];
+    const required = ['storage', 'tabs', 'webNavigation', 'scripting', 'activeTab', 'alarms'];
     for (const perm of required) {
       assert(manifest.permissions.includes(perm), `Missing required permission: ${perm}`);
     }
@@ -384,6 +384,56 @@ async function runTestSuite() {
     assert(recCode.includes('flushPendingInput'), 'Flushes input buffer on form submit / click');
     assert(recCode.includes('beforeunload'), 'Flushes input before page unload');
     assert(recCode.includes('pagehide'), 'Flushes input on pagehide');
+  });
+
+  // ----------------------------------------------------------------------------
+  // TEST GROUP 8: Production Edge-Case Fixes (Shadow DOM, Iframes, SPA, Alarms)
+  // ----------------------------------------------------------------------------
+  console.log('\n--- Group 8: Production Edge-Case Fixes ---');
+
+  test('Fix 1: Shadow DOM traversal in recorder.ts & replayer.ts', () => {
+    const recCode = fs.readFileSync('src/content_scripts/recorder.ts', 'utf-8');
+    const repCode = fs.readFileSync('src/content_scripts/replayer.ts', 'utf-8');
+
+    // Recorder Shadow DOM logic
+    assert(recCode.includes('getShadowHostChain'), 'recorder.ts implements getShadowHostChain');
+    assert(recCode.includes('shadow:pierce'), 'recorder.ts generates shadow:pierce locator strategy');
+    assert(recCode.includes(' >>> '), 'recorder.ts supports deep >>> piercing path in CSS path generator');
+
+    // Replayer Shadow DOM logic
+    assert(repCode.includes('resolveShadowPierceTarget'), 'replayer.ts implements resolveShadowPierceTarget');
+    assert(repCode.includes('queryDomDeep'), 'replayer.ts implements queryDomDeep recursive fallback');
+    assert(repCode.includes('shadowRoot'), 'replayer.ts inspects element.shadowRoot across shadow hosts');
+  });
+
+  test('Fix 2: Cross-origin iframe routing & frameId dispatch in service_worker.ts', () => {
+    const swCode = fs.readFileSync('src/background/service_worker.ts', 'utf-8');
+    const recCode = fs.readFileSync('src/content_scripts/recorder.ts', 'utf-8');
+
+    assert(recCode.includes('isTopFrame'), 'recorder.ts flags isTopFrame on recorded commands');
+    assert(swCode.includes('command.frameId = _sender.frameId'), 'service_worker.ts associates _sender.frameId');
+    assert(swCode.includes('dispatchCommandToTab'), 'service_worker.ts uses dispatchCommandToTab');
+    assert(swCode.includes('frameId: command.frameId'), 'service_worker.ts passes targeted frameId to chrome.tabs.sendMessage');
+  });
+
+  test('Fix 3: SPA route change interception & instant input flush in recorder.ts', () => {
+    const recCode = fs.readFileSync('src/content_scripts/recorder.ts', 'utf-8');
+
+    assert(recCode.includes('history.pushState'), 'recorder.ts wraps history.pushState');
+    assert(recCode.includes('history.replaceState'), 'recorder.ts wraps history.replaceState');
+    assert(recCode.includes('popstate'), 'recorder.ts listens to popstate event');
+    assert(recCode.includes('hashchange'), 'recorder.ts listens to hashchange event');
+  });
+
+  test('Fix 4: Manifest V3 service worker keep-alive alarms & session refreshes', () => {
+    const swCode = fs.readFileSync('src/background/service_worker.ts', 'utf-8');
+    const manifest = JSON.parse(fs.readFileSync('manifest.json', 'utf-8'));
+
+    assert(manifest.permissions.includes('alarms'), 'manifest.json declares alarms permission');
+    assert(swCode.includes('REPLAY_KEEPALIVE_ALARM'), 'service_worker.ts declares REPLAY_KEEPALIVE_ALARM');
+    assert(swCode.includes('startReplayKeepAlive'), 'service_worker.ts implements startReplayKeepAlive');
+    assert(swCode.includes('stopReplayKeepAlive'), 'service_worker.ts implements stopReplayKeepAlive');
+    assert(swCode.includes('replayingStepIndex: i'), 'service_worker.ts refreshes session storage on every step');
   });
 
   await server.close();

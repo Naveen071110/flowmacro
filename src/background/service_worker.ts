@@ -336,6 +336,15 @@ async function handleIncomingMessage(msg: any, _sender: chrome.runtime.MessageSe
     case 'RECORD_STEP': {
       const command: SeleniumCommand = msg.command || msg.step;
       if (command) {
+        // FIX 2: Frame Tracking from message sender
+        if (typeof _sender.frameId === 'number') {
+          command.frameId = _sender.frameId;
+          command.isTopFrame = _sender.frameId === 0;
+        } else if (typeof msg.isTopFrame === 'boolean') {
+          command.isTopFrame = msg.isTopFrame;
+          command.frameId = msg.isTopFrame ? 0 : command.frameId;
+        }
+
         // Forward command to IDE window
         sendToIde({
           type: 'RECORDED_COMMAND',
@@ -506,7 +515,53 @@ async function stopRecording() {
   return { status: 'recording_stopped' };
 }
 
+// ============================================================================
+// MANIFEST V3 SERVICE WORKER KEEP-ALIVE ENGINE (FIX 4)
+// ============================================================================
+const REPLAY_KEEPALIVE_ALARM = 'flowmacro_replay_keepalive';
+
+function startReplayKeepAlive() {
+  try {
+    if (chrome.alarms) {
+      chrome.alarms.create(REPLAY_KEEPALIVE_ALARM, { periodInMinutes: 0.35 }); // ping every ~21 seconds
+    }
+  } catch (err) {
+    console.debug('[FlowMacro] Keepalive alarm create notice:', err);
+  }
+}
+
+function stopReplayKeepAlive() {
+  try {
+    if (chrome.alarms) {
+      chrome.alarms.clear(REPLAY_KEEPALIVE_ALARM).catch(() => {});
+      chrome.alarms.clear('flowmacro_interim_step_wait').catch(() => {});
+    }
+  } catch (err) {
+    console.debug('[FlowMacro] Keepalive alarm clear notice:', err);
+  }
+}
+
+if (chrome.alarms?.onAlarm) {
+  chrome.alarms.onAlarm.addListener(async (alarm) => {
+    if (alarm.name === REPLAY_KEEPALIVE_ALARM || alarm.name === 'flowmacro_interim_step_wait') {
+      if (sessionState.status === 'replaying') {
+        try {
+          if (chrome.storage?.session) {
+            await chrome.storage.session.set({
+              replayingKeepAlivePing: Date.now(),
+              replayingStepIndex: currentReplayIndex,
+            });
+          }
+        } catch (_) {}
+      } else {
+        stopReplayKeepAlive();
+      }
+    }
+  });
+}
+
 function stopReplay() {
+  stopReplayKeepAlive();
   if (replayAbortController) {
     replayAbortController.aborted = true;
     replayAbortController = null;
@@ -536,6 +591,7 @@ async function startReplayProcess(
     return;
   }
 
+  startReplayKeepAlive();
   replayAbortController = { aborted: false, paused: false };
   activeSuite = suite;
   replaySpeed = speed;
@@ -586,7 +642,25 @@ async function startReplayProcess(
       const cmd = suite.commands[i];
       currentReplayIndex = i;
       updateSessionState({ currentStepIndex: i });
+
+      // FIX 4: Continuously refresh session storage to keep worker alive
+      if (chrome.storage?.session) {
+        chrome.storage.session.set({
+          replayingStepIndex: i,
+          lastReplayStepTime: Date.now(),
+        }).catch(() => {});
+      }
       await persistSession();
+
+      // If long wait step, schedule interim wake-up alarm
+      if (cmd.command === 'wait') {
+        const waitMs = (parseInt(cmd.target) || 1000) / speed;
+        if (waitMs > 15000 && chrome.alarms) {
+          chrome.alarms.create('flowmacro_interim_step_wait', {
+            delayInMinutes: Math.max(0.1, (waitMs / 60000) * 0.9),
+          });
+        }
+      }
 
       // Notify IDE row is Executing
       sendToIde({
@@ -668,10 +742,51 @@ async function startReplayProcess(
     addLog(`Replay Error: ${err.message || String(err)}`, 'error');
     updateSessionState({ status: 'error', error: err.message || String(err) });
   } finally {
+    stopReplayKeepAlive();
     replayAbortController = null;
     activeSuite = null;
     await persistSession();
   }
+}
+
+async function dispatchCommandToTab(
+  tabId: number,
+  command: SeleniumCommand,
+  speed: number,
+  timeoutMs: number = 6000
+): Promise<{ success: boolean; error?: string; navigated?: boolean } | null> {
+  const sendOptions =
+    typeof command.frameId === 'number' && command.frameId > 0
+      ? { frameId: command.frameId }
+      : undefined;
+
+  try {
+    const payload = {
+      type: 'EXECUTE_DOM_COMMAND',
+      command,
+      speed,
+      timeoutMs,
+    };
+    const res = sendOptions
+      ? await chrome.tabs.sendMessage(tabId, payload, sendOptions)
+      : await chrome.tabs.sendMessage(tabId, payload);
+    if (res) return res;
+  } catch (frameErr: any) {
+    // FIX 2: If targeted dispatch to frameId failed (frame reloaded/detached), fall back to top frame
+    if (sendOptions) {
+      console.debug(`[FlowMacro] Frame ${command.frameId} dispatch notice, falling back:`, frameErr);
+      const fallbackRes = await chrome.tabs.sendMessage(tabId, {
+        type: 'EXECUTE_DOM_COMMAND',
+        command,
+        speed,
+        timeoutMs,
+      });
+      if (fallbackRes) return fallbackRes;
+    } else {
+      throw frameErr;
+    }
+  }
+  return null;
 }
 
 async function executeDomCommand(
@@ -692,12 +807,7 @@ async function executeDomCommand(
   // Attempt 1
   try {
     await ensureScriptInjected(tabId, 'content_scripts/replayer.js');
-    const response = await chrome.tabs.sendMessage(tabId, {
-      type: 'EXECUTE_DOM_COMMAND',
-      command,
-      speed,
-      timeoutMs: 6000,
-    });
+    const response = await dispatchCommandToTab(tabId, command, speed, 6000);
     return response || { success: false, error: `No response from replayer for [${command.target}]` };
   } catch (err: any) {
     // Attempt 2: Page may be transitioning or reloading
@@ -706,12 +816,7 @@ async function executeDomCommand(
       await waitForTabComplete(tabId, 5000);
       await new Promise((r) => setTimeout(r, 200));
       await ensureScriptInjected(tabId, 'content_scripts/replayer.js');
-      const response = await chrome.tabs.sendMessage(tabId, {
-        type: 'EXECUTE_DOM_COMMAND',
-        command,
-        speed,
-        timeoutMs: 6000,
-      });
+      const response = await dispatchCommandToTab(tabId, command, speed, 6000);
       return response || { success: false, error: `No response on replayer retry for [${command.target}]` };
     } catch (retryErr: any) {
       // Attempt 3: Final attempt with longer stabilization
@@ -720,12 +825,7 @@ async function executeDomCommand(
         await new Promise((r) => setTimeout(r, 400));
         await waitForTabComplete(tabId, 5000);
         await ensureScriptInjected(tabId, 'content_scripts/replayer.js');
-        const response = await chrome.tabs.sendMessage(tabId, {
-          type: 'EXECUTE_DOM_COMMAND',
-          command,
-          speed,
-          timeoutMs: 6000,
-        });
+        const response = await dispatchCommandToTab(tabId, command, speed, 6000);
         return response || { success: false, error: `No response on final replayer retry for [${command.target}]` };
       } catch (finalErr: any) {
         const errorMsg = `DOM execution failed for target [${command.target}]: ${finalErr.message || String(finalErr)}`;

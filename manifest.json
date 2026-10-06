@@ -5,6 +5,7 @@
   "description": "Record web workflows, mask passwords with local encryption, replay macros, and export clean Playwright or Selenium code.",
   "permissions": [
     "activeTab",
+    "alarms",
     "scripting",
     "sidePanel",
     "storage",

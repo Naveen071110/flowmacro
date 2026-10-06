@@ -88,14 +88,34 @@ import { encryptSecret } from '../shared/crypto';
   checkStorageAndAutoAttach();
 
   // ============================================================================
-  // SELECTOR WATERFALL & TARGET GENERATOR
-  // Order: data-testid -> ID -> ARIA -> Name -> CSS Path -> XPath
+  // SELECTOR WATERFALL & TARGET GENERATOR (WITH SHADOW DOM PIERCING)
+  // Order: Shadow Pierce -> data-testid -> ID -> ARIA -> Name -> CSS Path -> XPath
   // ============================================================================
+  function getShadowHostChain(element: Element): Element[] {
+    const hosts: Element[] = [];
+    let current: Node | null = element;
+    while (current) {
+      const rootNode: Node | null =
+        current && typeof current.getRootNode === 'function' ? current.getRootNode() : null;
+      if (rootNode && rootNode instanceof ShadowRoot && rootNode.host) {
+        hosts.unshift(rootNode.host);
+        current = rootNode.host;
+      } else {
+        break;
+      }
+    }
+    return hosts;
+  }
+
   function generateTargets(element: Element): {
     primary: string;
     targets: Array<[string, string]>;
+    isShadow?: boolean;
+    shadowHost?: string;
   } {
     const list: Array<[string, string]> = [];
+    const shadowHosts = getShadowHostChain(element);
+    const isShadow = shadowHosts.length > 0;
 
     // 1. data-testid / test attributes
     const testAttrs = ['data-testid', 'data-test', 'data-cy', 'data-qa'];
@@ -107,14 +127,16 @@ import { encryptSecret } from '../shared/crypto';
       }
     }
 
-    // 2. ID
+    // 2. ID (scoped if inside shadow)
     if (element.id && typeof element.id === 'string') {
       const isDynamic =
         /(:r[0-9a-z]+:|\b[a-f0-9]{8,}\b|mui-|ember|react-|radix-)/i.test(element.id) ||
         /\d{4,}/.test(element.id);
       if (!isDynamic) {
         try {
-          if (document.querySelectorAll(`#${CSS.escape(element.id)}`).length === 1) {
+          const rootNode = element.getRootNode ? element.getRootNode() : document;
+          const queryScope = (rootNode instanceof ShadowRoot || rootNode instanceof Document) ? rootNode : document;
+          if (queryScope.querySelectorAll(`#${CSS.escape(element.id)}`).length === 1) {
             list.push([`id=${element.id}`, 'id']);
           }
         } catch (err) {
@@ -127,7 +149,9 @@ import { encryptSecret } from '../shared/crypto';
     const ariaLabel = element.getAttribute('aria-label');
     if (ariaLabel) {
       try {
-        if (document.querySelectorAll(`[aria-label="${CSS.escape(ariaLabel)}"]`).length === 1) {
+        const rootNode = element.getRootNode ? element.getRootNode() : document;
+        const queryScope = (rootNode instanceof ShadowRoot || rootNode instanceof Document) ? rootNode : document;
+        if (queryScope.querySelectorAll(`[aria-label="${CSS.escape(ariaLabel)}"]`).length === 1) {
           list.push([`css=[aria-label="${ariaLabel}"]`, 'aria-label']);
         }
       } catch (err) {
@@ -137,8 +161,10 @@ import { encryptSecret } from '../shared/crypto';
     const role = element.getAttribute('role');
     if (role && ariaLabel) {
       try {
+        const rootNode = element.getRootNode ? element.getRootNode() : document;
+        const queryScope = (rootNode instanceof ShadowRoot || rootNode instanceof Document) ? rootNode : document;
         if (
-          document.querySelectorAll(`[role="${CSS.escape(role)}"][aria-label="${CSS.escape(ariaLabel)}"]`).length === 1
+          queryScope.querySelectorAll(`[role="${CSS.escape(role)}"][aria-label="${CSS.escape(ariaLabel)}"]`).length === 1
         ) {
           list.push([`css=[role="${role}"][aria-label="${ariaLabel}"]`, 'role']);
         }
@@ -153,25 +179,56 @@ import { encryptSecret } from '../shared/crypto';
       list.push([`name=${name}`, 'name']);
     }
 
-    // 5. Clean CSS Path
+    // 5. Clean CSS Path (includes shadow pierce path)
     const cssPath = generateCssPath(element);
     list.push([`css=${cssPath}`, 'css:finder']);
 
-    // 6. XPath
-    const xpath = generateXPath(element);
-    if (xpath) {
-      list.push([`xpath=${xpath}`, 'xpath:position']);
+    // 6. XPath (if not inside shadow root)
+    if (!isShadow) {
+      const xpath = generateXPath(element);
+      if (xpath) {
+        list.push([`xpath=${xpath}`, 'xpath:position']);
+      }
+    }
+
+    // 7. If inside Shadow DOM, generate deep shadow-piercing locators (e.g. shadow=host >>> inner)
+    let shadowHostTarget: string | undefined;
+    if (isShadow) {
+      const hostLocators = shadowHosts.map((h) => {
+        const hTargets = generateTargets(h);
+        return hTargets.primary;
+      });
+      shadowHostTarget = hostLocators[0];
+
+      // Inner target (without shadow host prefix)
+      const innerTarget = list.length > 0 ? list[0][0] : element.tagName.toLowerCase();
+      const shadowPierce = `shadow=${hostLocators.join(' >>> ')} >>> ${innerTarget}`;
+      // Prepend shadow piercing locator as primary
+      list.unshift([shadowPierce, 'shadow:pierce']);
     }
 
     const primary = list.length > 0 ? list[0][0] : element.tagName.toLowerCase();
-    return { primary, targets: list };
+    return {
+      primary,
+      targets: list,
+      isShadow,
+      shadowHost: shadowHostTarget,
+    };
   }
 
   function generateCssPath(el: Element): string {
+    const rootNode = el.getRootNode ? el.getRootNode() : null;
+    const isInsideShadow = rootNode instanceof ShadowRoot && Boolean(rootNode.host);
+
     if (el.id && !/\d{4,}/.test(el.id)) {
       try {
-        if (document.querySelectorAll(`#${CSS.escape(el.id)}`).length === 1) {
-          return `#${CSS.escape(el.id)}`;
+        const scopeDoc = isInsideShadow ? (rootNode as ShadowRoot) : document;
+        if (scopeDoc.querySelectorAll(`#${CSS.escape(el.id)}`).length === 1) {
+          const idPath = `#${CSS.escape(el.id)}`;
+          if (isInsideShadow && (rootNode as ShadowRoot).host) {
+            return `${generateCssPath((rootNode as ShadowRoot).host)} >>> ${idPath}`;
+          }
+          return idPath;
         }
       } catch (err) {
         console.debug('[AutoMacro Recorder] CSS path ID query notice:', err);
@@ -181,7 +238,12 @@ import { encryptSecret } from '../shared/crypto';
     const path: string[] = [];
     let current: Element | null = el;
 
-    while (current && current.nodeType === Node.ELEMENT_NODE && current !== document.body) {
+    while (
+      current &&
+      current.nodeType === Node.ELEMENT_NODE &&
+      current !== document.body &&
+      (!isInsideShadow || current !== (rootNode as any))
+    ) {
       let selector = current.tagName.toLowerCase();
 
       const classes = Array.from(current.classList).filter(
@@ -219,7 +281,11 @@ import { encryptSecret } from '../shared/crypto';
       current = current.parentElement;
     }
 
-    return path.join(' > ');
+    const localPath = path.join(' > ');
+    if (isInsideShadow && (rootNode as ShadowRoot).host) {
+      return `${generateCssPath((rootNode as ShadowRoot).host)} >>> ${localPath}`;
+    }
+    return localPath;
   }
 
   function generateXPath(el: Element): string {
@@ -272,7 +338,8 @@ import { encryptSecret } from '../shared/crypto';
   ) {
     if (!isRecording) return;
 
-    const { primary, targets } = generateTargets(target);
+    const targetsData = generateTargets(target);
+    const { primary, targets } = targetsData;
     const cmdId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
     const isSensitive = target instanceof HTMLElement && isSensitiveField(target);
 
@@ -293,6 +360,8 @@ import { encryptSecret } from '../shared/crypto';
       finalValue = placeholder;
     }
 
+    const isTopFrame = window === window.top;
+
     const command: SeleniumCommand = {
       id: cmdId,
       command: commandType,
@@ -305,6 +374,9 @@ import { encryptSecret } from '../shared/crypto';
       isSensitive: isSensitive ? true : undefined,
       encryptedSecret,
       envVarName,
+      isTopFrame,
+      isShadow: targetsData.isShadow,
+      shadowHost: targetsData.shadowHost,
     };
 
     flashTarget(target as HTMLElement, isSensitive);
@@ -315,6 +387,7 @@ import { encryptSecret } from '../shared/crypto';
         type: 'RECORDED_COMMAND',
         command,
         step: command,
+        isTopFrame,
       }).catch((err) => {
         console.debug('[FlowMacro Recorder] Notice sending recorded command:', err);
       });
@@ -429,6 +502,13 @@ import { encryptSecret } from '../shared/crypto';
     flushPendingInput();
   }
 
+  let originalPushState: typeof history.pushState | null = null;
+  let originalReplaceState: typeof history.replaceState | null = null;
+
+  function handleSpaNavigation() {
+    flushPendingInput();
+  }
+
   function attachRecorderListeners() {
     if (listenersAttached) return;
     window.addEventListener('click', handleClick, true);
@@ -438,6 +518,25 @@ import { encryptSecret } from '../shared/crypto';
     window.addEventListener('submit', handleSubmit, true);
     window.addEventListener('beforeunload', handleBeforeUnload, true);
     window.addEventListener('pagehide', handleBeforeUnload, true);
+
+    // FIX 3: Intercept SPA client-side navigations (React Router, Next.js, Vue)
+    if (!originalPushState && typeof history !== 'undefined' && history.pushState) {
+      originalPushState = history.pushState;
+      originalReplaceState = history.replaceState;
+
+      history.pushState = function (...args) {
+        flushPendingInput();
+        return originalPushState!.apply(this, args);
+      };
+
+      history.replaceState = function (...args) {
+        flushPendingInput();
+        return originalReplaceState!.apply(this, args);
+      };
+    }
+    window.addEventListener('popstate', handleSpaNavigation, true);
+    window.addEventListener('hashchange', handleSpaNavigation, true);
+
     listenersAttached = true;
   }
 
@@ -451,6 +550,17 @@ import { encryptSecret } from '../shared/crypto';
     window.removeEventListener('submit', handleSubmit, true);
     window.removeEventListener('beforeunload', handleBeforeUnload, true);
     window.removeEventListener('pagehide', handleBeforeUnload, true);
+
+    // Restore original history methods
+    if (originalPushState && typeof history !== 'undefined') {
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState!;
+      originalPushState = null;
+      originalReplaceState = null;
+    }
+    window.removeEventListener('popstate', handleSpaNavigation, true);
+    window.removeEventListener('hashchange', handleSpaNavigation, true);
+
     listenersAttached = false;
   }
 
