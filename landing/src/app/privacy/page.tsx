@@ -30,7 +30,7 @@ export default function PrivacyPolicy() {
             Privacy Policy &amp; Security Specs
           </h1>
           <p className="text-xs font-mono text-slate-500">
-            Last updated: September 12, 2026 • Zero-Trust Standard
+            Last updated: October 6, 2026 • Zero-Trust Standard
           </p>
         </div>
 
@@ -73,12 +73,12 @@ export default function PrivacyPolicy() {
               Zero-Backend &amp; Local Data Retention
             </h2>
             <p className="text-slate-400">
-              AutoMacro IDE operates on a strictly client-side, zero-backend architecture. All recorded macro actions,
+              FlowMacro IDE operates on a strictly client-side, zero-backend architecture. All recorded macro actions,
               DOM element selectors, click coordinates, form values, and execution logs are stored 100% locally
-              on your machine using <code className="text-slate-200 bg-slate-900 px-1 py-0.5 rounded">chrome.storage.local</code>.
+              on your machine using <code className="text-slate-200 bg-slate-900 px-1 py-0.5 rounded">chrome.storage.local</code> and <code className="text-slate-200 bg-slate-900 px-1 py-0.5 rounded">chrome.storage.session</code>.
             </p>
             <p className="text-slate-400">
-              AutoMacro does not maintain any external database, API server, or cloud repository. If you uninstall
+              FlowMacro does not maintain any external database, API server, or cloud repository. If you uninstall
               the extension or clear browser storage, your saved macros are erased permanently from your local device.
             </p>
           </section>
@@ -90,7 +90,7 @@ export default function PrivacyPolicy() {
               Zero-Trust Credential &amp; Password Handling
             </h2>
             <p className="text-slate-400">
-              AutoMacro IDE integrates a native Zero-Trust Credential Engine designed to prevent plain-text secrets from
+              FlowMacro IDE integrates a native Zero-Trust Credential Engine designed to prevent plain-text secrets from
               leaking into exported files, browser storage, or shared JSON configurations:
             </p>
             <ul className="list-disc pl-5 space-y-1.5 text-slate-400">
@@ -117,7 +117,7 @@ export default function PrivacyPolicy() {
               <span className="text-emerald-400 font-mono">03.</span>
               Browser Permissions &amp; Scope
             </h2>
-            <p className="text-slate-400">AutoMacro IDE requests only the minimum required Chrome Manifest V3 permissions:</p>
+            <p className="text-slate-400">FlowMacro IDE requests only the minimum required Chrome Manifest V3 permissions:</p>
             <div className="border border-slate-800 rounded-lg overflow-hidden divide-y divide-slate-800 text-xs">
               <div className="p-3 bg-[#0f172a] flex justify-between">
                 <span className="text-emerald-400">activeTab &amp; tabs</span>
@@ -128,8 +128,20 @@ export default function PrivacyPolicy() {
                 <span className="text-slate-400">Injects recorder and replayer content scripts into target pages.</span>
               </div>
               <div className="p-3 bg-[#0f172a] flex justify-between">
-                <span className="text-emerald-400">storage</span>
+                <span className="text-emerald-400">storage &amp; unlimitedStorage</span>
                 <span className="text-slate-400">Stores test suites and the client-side AES key locally.</span>
+              </div>
+              <div className="p-3 bg-[#0f172a] flex justify-between">
+                <span className="text-emerald-400">webNavigation</span>
+                <span className="text-slate-400">Detects page redirects to auto-reattach recording session.</span>
+              </div>
+              <div className="p-3 bg-[#0f172a] flex justify-between">
+                <span className="text-emerald-400">alarms</span>
+                <span className="text-slate-400">Maintains service worker keep-alive during long replay steps.</span>
+              </div>
+              <div className="p-3 bg-[#0f172a] flex justify-between">
+                <span className="text-emerald-400">sidePanel</span>
+                <span className="text-slate-400">Enables Chrome native side panel workflow management.</span>
               </div>
             </div>
           </section>
@@ -138,12 +150,12 @@ export default function PrivacyPolicy() {
           <section className="space-y-2">
             <h2 className="text-sm font-semibold text-white flex items-center gap-2">
               <span className="text-emerald-400 font-mono">04.</span>
-              Third-Party Payments
+              Beta Access &amp; Future Commercial Licenses
             </h2>
             <p className="text-slate-400">
-              AutoMacro Pro lifetime licenses are processed securely by <strong>Dodo Payments</strong>.
-              We do not collect, process, or store credit card numbers, billing addresses, or banking credentials.
-              Payment transactions occur entirely within Dodo Payments&apos; PCI-compliant checkout infrastructure.
+              During the public beta, FlowMacro is 100% free with all features fully unlocked. Future commercial
+              lifetime licenses will be processed securely by PCI-compliant merchant gateways.
+              We never collect, process, or store credit card numbers, billing addresses, or financial data on our servers.
             </p>
           </section>
 
@@ -154,10 +166,10 @@ export default function PrivacyPolicy() {
               Contact &amp; Inquiries
             </h2>
             <p className="text-slate-400">
-              If you have any questions or security inquiries regarding AutoMacro, please contact:
+              If you have any questions or security inquiries regarding FlowMacro, please contact:
             </p>
             <p className="text-emerald-400">
-              naveen@automacro.dev
+              naveen@flowmacro.dev
             </p>
           </section>
         </div>
@@ -165,7 +177,7 @@ export default function PrivacyPolicy() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 py-8 text-center text-xs font-mono text-slate-500 bg-[#090d14]">
-        AutoMacro IDE • Terminal &amp; Security Blueprint Engine • Built by Naveen Guru
+        FlowMacro IDE • Local Manifest V3 Automation Engine • Built by Naveen Guru
       </footer>
     </div>
   );

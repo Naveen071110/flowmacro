@@ -38,7 +38,7 @@ import {
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/flowmacro-%E2%80%94-web-automatio/agehjimobcongfgkagfjhmlibkkmjppc?hl=en-US&utm_source=ext_sidebar";
 
-// Mock Steps for Hero Dual-Pane IDE Terminal
+// Mock Steps for Hero Dual-Pane IDE Terminal showcasing 5-tier waterfall & Shadow DOM
 const HERO_COMMANDS = [
   {
     id: 1,
@@ -51,9 +51,9 @@ const HERO_COMMANDS = [
   {
     id: 2,
     command: "type",
-    target: 'css=[data-testid="email-input"]',
+    target: 'data-testid="email-input"',
     value: "lead.engineer@acme.dev",
-    status: "Resolved",
+    status: "Waterfall Tier 1",
     type: "input",
   },
   {
@@ -68,12 +68,19 @@ const HERO_COMMANDS = [
   {
     id: 4,
     command: "click",
-    target: "button#login-submit",
-    status: "Executed",
+    target: 'aria/Sign in button',
+    status: "Waterfall Tier 3",
     type: "click",
   },
   {
     id: 5,
+    command: "click",
+    target: "shadow=auth-box >>> #mfa-btn",
+    status: "Shadow Pierced",
+    type: "shadow",
+  },
+  {
+    id: 6,
     command: "waitFor",
     target: '#prod-analytics-cluster',
     value: "visible",
@@ -87,12 +94,12 @@ export default function LandingPage() {
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [isReplaying, setIsReplaying] = useState(true);
   const [logs, setLogs] = useState<string[]>([
-    "[14:02:11.104] [INFO] Target window #1024 attached via chrome.debugger protocol",
+    "[14:02:11.104] [INFO] Target tab #1024 connected via Chrome Runtime & Scripting APIs",
     "[14:02:11.240] [OK] Navigated to https://app.supabase.com/login (200 OK, 124ms)",
-    "[14:02:11.750] [DOM] Resolved selector 'input#email' in 3.4ms",
-    "[14:02:12.180] [SHIELD] 🛡️ Sensitive input detected: value masked with {{SECRET_PASSWORD}}. AES-256 encrypted in RAM.",
-    "[14:02:12.620] [ACTION] Dispatching trusted click event to button#login-submit",
-    "[14:02:13.110] [SUCCESS] Replay executed on tab #1024 in 1.87s with 0 errors.",
+    "[14:02:11.750] [DOM] Resolved selector 'data-testid=email-input' in 2.1ms (Waterfall Tier 1)",
+    "[14:02:12.180] [SHIELD] 🛡️ Sensitive input detected: value masked with {{SECRET_PASSWORD}}. WebCrypto AES-256-GCM armed.",
+    "[14:02:12.620] [PIERCE] Pierced open Shadow DOM host '<auth-box>' -> '#mfa-btn'",
+    "[14:02:13.110] [SUCCESS] Replay executed on tab #1024 across frames with 0 DOM errors.",
   ]);
 
   // Tabbed Exporter Demo State
@@ -112,7 +119,9 @@ export default function LandingPage() {
         if (current.isSensitive) {
           newLog = `[${time}] [VAULT] 🛡️ Password auto-masked as {{SECRET_PASSWORD}}. WebCrypto AES-256-GCM armed. 0 bytes leaked.`;
         } else if (current.id === 5) {
-          newLog = `[${time}] [SUCCESS] Replay executed on tab #1024 with 0 DOM errors.`;
+          newLog = `[${time}] [PIERCE] Pierced open Shadow DOM host '<auth-box>' -> '#mfa-btn'`;
+        } else if (current.id === 6) {
+          newLog = `[${time}] [SUCCESS] Replay executed on tab #1024 with 0 DOM errors across frames.`;
         }
 
         setLogs((prevLogs) => [...prevLogs.slice(-5), newLog]);
@@ -246,7 +255,7 @@ WebDriverWait(driver, 10).until(
                   FlowMacro <span className="text-emerald-400">IDE</span>
                 </span>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
-                  v1.0.1
+                  v1.0.2
                 </span>
               </div>
             </Link>
@@ -295,23 +304,17 @@ WebDriverWait(driver, 10).until(
           {/* Badge */}
           <div className="inline-flex items-center gap-2 font-mono text-xs text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 rounded-full mb-8 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>🛡️ Zero-Trust Web Automation &amp; Selenium IDE Engine</span>
+            <span>🛡️ 100% Local Manifest V3 • Zero Cloud Backend</span>
           </div>
 
           {/* Headline */}
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white mb-6 leading-[1.12] max-w-4xl mx-auto">
-            Record Web Actions. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-mint-400">
-              Mask Passwords.
-            </span>{" "}
-            Replay &amp; Export in Seconds.
+            Automate Web Workflows &amp; Export Code Right from Your Browser
           </h1>
 
           {/* Subheadline */}
           <p className="text-base sm:text-lg text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed font-normal">
-            The developer-first Chrome extension that turns browser workflows into executable macros
-            and clean Playwright, Puppeteer, or Python Selenium scripts with{" "}
-            <span className="text-emerald-400 font-semibold font-mono">zero password leakage</span>.
+            A zero-backend, privacy-first Selenium &amp; Playwright recorder built into Google Chrome. Record multi-page workflows, mask passwords with AES-256, and export clean code for free.
           </p>
 
           {/* Primary CTAs */}
@@ -332,7 +335,7 @@ WebDriverWait(driver, 10).until(
               className="w-full sm:w-auto px-6 py-3 rounded-lg bg-[#0f172a] hover:bg-slate-800 text-slate-200 border border-slate-800 text-xs font-mono font-medium transition-all flex items-center justify-center gap-2"
             >
               <Terminal className="w-4 h-4 text-emerald-400" />
-              <span>View Live Demo</span>
+              <span>View Code Exporters</span>
             </a>
           </div>
 
@@ -474,8 +477,8 @@ WebDriverWait(driver, 10).until(
                 </div>
 
                 <div className="px-4 py-2.5 bg-[#0b0f17] border-t border-slate-800 text-[11px] font-mono text-slate-500 flex items-center justify-between">
-                  <span>Deterministic Multi-Locator Waterfall</span>
-                  <span className="text-emerald-400">5 / 5 Commands Ready</span>
+                  <span>5-Tier Waterfall: data-testid → id → ARIA → CSS → XPath</span>
+                  <span className="text-emerald-400">6 / 6 Commands Ready</span>
                 </div>
               </div>
 
@@ -524,7 +527,7 @@ WebDriverWait(driver, 10).until(
         </div>
       </section>
 
-      {/* 3. FEATURE GRID (4 BLUEPRINT CARDS) */}
+      {/* 3. FEATURE GRID (6 ARCHITECTURAL PILLARS) */}
       <section id="features" className="py-24 px-6 border-t border-slate-800/80 bg-[#0b0f17]">
         <div className="max-w-6xl mx-auto">
           <div className="max-w-2xl mb-16">
@@ -532,34 +535,69 @@ WebDriverWait(driver, 10).until(
               System Specification
             </span>
             <h2 className="text-3xl font-extrabold text-white tracking-tight mb-3">
-              Four Core Architectural Pillars
+              Six Core Architectural Pillars
             </h2>
             <p className="text-sm text-slate-400 leading-relaxed font-normal">
-              Built for automation engineers, QA specialists, and developers who require deterministic browser replay and zero-trust security.
+              Built for automation engineers, QA specialists, and developers who require deterministic browser replay, zero-trust credential security, and zero cloud dependencies.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Card 1 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Card 1: 100% Client-Side Local Execution */}
+            <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800/80 hover:border-emerald-500/40 transition-colors flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
+                  <ServerOff className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2 font-mono">
+                  100% Local Execution
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Operates entirely within Chrome using Manifest V3 and <code className="text-slate-200">chrome.storage.local/session</code>. Zero cloud execution sandboxes, no external backend servers, and zero telemetry. Your automation data never leaves your device.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] font-mono text-emerald-400 flex items-center gap-1">
+                <span>01 / ZERO CLOUD DEPENDENCIES</span>
+              </div>
+            </div>
+
+            {/* Card 2: 5-Tier Selector Waterfall */}
             <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800/80 hover:border-emerald-500/40 transition-colors flex flex-col justify-between">
               <div>
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
                   <Layers className="w-5 h-5" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2 font-mono">
-                  Selenium IDE Architecture
+                  5-Tier Selector Waterfall
                 </h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Standalone popup controller window (960 × 750px) orchestrates target browser tabs via the Chrome Debugger
-                  and Runtime protocol. Deterministic replay without in-page iframe collisions or DOM CSS pollution.
+                  Records redundant fallback locators: <code className="text-slate-200">data-testid</code> → <code className="text-slate-200">id</code> → <code className="text-slate-200">aria-label</code> → optimal CSS path → XPath. If an element&apos;s styling or markup changes, playback falls back down the chain seamlessly.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] font-mono text-emerald-400 flex items-center gap-1">
-                <span>01 / DEDICATED CONTROLLER WINDOW</span>
+                <span>02 / DETERMINISTIC LOCATORS</span>
               </div>
             </div>
 
-            {/* Card 2 */}
+            {/* Card 3: Multi-Page & SPA Navigation */}
+            <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800/80 hover:border-emerald-500/40 transition-colors flex flex-col justify-between">
+              <div>
+                <div className="w-10 h-10 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 mb-4">
+                  <RotateCcw className="w-5 h-5" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2 font-mono">
+                  Multi-Page &amp; SPA Routing
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Auto-reattaches across full-page redirects, OAuth logins, and SPA transitions (<code className="text-slate-200">pushState/replaceState/popstate</code>). Flushes debounced inputs instantly upon route changes to guarantee zero dropped keystrokes.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] font-mono text-teal-400 flex items-center gap-1">
+                <span>03 / REDIRECT &amp; ROUTE RESILIENT</span>
+              </div>
+            </div>
+
+            {/* Card 4: AES-256 Secret Vault */}
             <div id="vault" className="p-6 rounded-xl bg-[#0f172a] border border-emerald-500/30 hover:border-emerald-500/50 transition-colors flex flex-col justify-between shadow-[0_0_30px_rgba(16,185,129,0.04)]">
               <div>
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4">
@@ -569,53 +607,47 @@ WebDriverWait(driver, 10).until(
                   AES-256 Secret Vault
                 </h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Auto-detects <code className="text-slate-200">input[type=&quot;password&quot;]</code> and{" "}
-                  <code className="text-slate-200">autocomplete=&quot;current-password&quot;</code>. Raw secrets are encrypted
-                  locally via native Web Crypto API (AES-256-GCM) with 96-bit random IVs, exporting clean <code className="text-emerald-400">process.env</code> variables.
+                  Auto-detects <code className="text-slate-200">input[type=&quot;password&quot;]</code> and sensitive credentials. In-RAM encryption via native Web Crypto API (AES-256-GCM) with 96-bit random IVs, exporting clean <code className="text-emerald-400">process.env</code> variables with zero leakage.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] font-mono text-emerald-400 flex items-center gap-1">
-                <span>02 / ZERO-LEAK LOCAL ENCRYPTION</span>
+                <span>04 / ZERO-LEAK LOCAL ENCRYPTION</span>
               </div>
             </div>
 
-            {/* Card 3 */}
+            {/* Card 5: Shadow DOM & Iframe Routing */}
             <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800/80 hover:border-emerald-500/40 transition-colors flex flex-col justify-between">
               <div>
-                <div className="w-10 h-10 rounded-lg bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 mb-4">
-                  <FileSpreadsheet className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
+                  <Zap className="w-5 h-5" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2 font-mono">
-                  CSV Batch Execution Engine
+                  Shadow DOM &amp; Iframe Support
                 </h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Upload any spreadsheet (<code className="text-slate-200">.csv</code>) to bind parameter columns like{" "}
-                  <code className="text-slate-200">&#123;&#123;email&#125;&#125;</code> and{" "}
-                  <code className="text-slate-200">&#123;&#123;user_id&#125;&#125;</code>. Execute multi-row form fills
-                  and automated database migrations in seconds with throttled playback.
+                  Recursively traverses open shadow roots using shadow-piercing locators (<code className="text-slate-200">&gt;&gt;&gt;</code>) and routes automation commands to specific frame IDs. Automates embedded payment forms, Stripe elements, and Web Components with ease.
                 </p>
               </div>
-              <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] font-mono text-teal-400 flex items-center gap-1">
-                <span>03 / MASS DATA ENTRY RUNNER</span>
+              <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] font-mono text-emerald-400 flex items-center gap-1">
+                <span>05 / SHADOW ROOTS &amp; FRAMES</span>
               </div>
             </div>
 
-            {/* Card 4 */}
+            {/* Card 6: Standalone IDE Window & Exporters */}
             <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800/80 hover:border-emerald-500/40 transition-colors flex flex-col justify-between">
               <div>
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
                   <FileCode className="w-5 h-5" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2 font-mono">
-                  Multi-Format Code Exporters
+                  Standalone IDE &amp; Exporters
                 </h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  1-click export to clean, idiomatic Playwright (TypeScript/JavaScript), Puppeteer, Python Selenium, or native
-                  Selenium <code className="text-slate-200">.side</code> JSON files. Formatted with robust locator waterfalls and zero setup friction.
+                  Dedicated controller window (960 × 750px) with Record, Pause, Stop, Step Editing, and Undo/Redo history. 1-click export to clean Playwright (TS), Puppeteer (JS), Python Selenium, or native Selenium <code className="text-slate-200">.side</code> JSON.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] font-mono text-emerald-400 flex items-center gap-1">
-                <span>04 / PLAYWRIGHT • PUPPETEER • PYTHON</span>
+                <span>06 / PLAYWRIGHT • PUPPETEER • SELENIUM</span>
               </div>
             </div>
           </div>
@@ -703,18 +735,20 @@ WebDriverWait(driver, 10).until(
         </div>
       </section>
 
-      {/* 5. PRICING SECTION (DODO PAYMENTS READY) */}
-      <section id="pricing" className="py-24 px-6 border-t border-slate-800/80 bg-[#0b0f17]">
+      {/* 5. PRICING SECTION (100% FREE BETA OVERLAY) */}
+      <section id="pricing" className="py-24 px-6 border-t border-slate-800/80 bg-[#0b0f17] relative">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center max-w-xl mx-auto mb-16">
-            <span className="text-xs font-mono text-emerald-400 uppercase tracking-wider block mb-2">
-              Transparent Pricing
-            </span>
-            <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">
-              Pay Once. Automate Forever.
+          {/* Header */}
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 font-mono text-xs font-semibold mb-4 shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>🟢 100% FREE DURING BETA — $29 ONE-TIME DEAL COMING SOON</span>
+            </div>
+            <h2 className="text-3xl font-extrabold text-white tracking-tight mb-3">
+              Full Automation Suite. Free in Beta.
             </h2>
             <p className="text-xs font-mono text-slate-400">
-              Zero recurring subscriptions. Instant checkout powered by Dodo Payments.
+              No paywall, no recurring subscriptions, no credit card required. Experience complete local automation with 0 plain-text leaks.
             </p>
           </div>
 
@@ -724,7 +758,7 @@ WebDriverWait(driver, 10).until(
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-mono text-slate-400 uppercase">Community Edition</span>
-                  <span className="text-xs font-mono text-slate-500">100% Free</span>
+                  <span className="text-xs font-mono text-slate-500">100% Free Forever</span>
                 </div>
                 <div className="text-4xl font-extrabold text-white mb-4 font-mono">$0</div>
                 <p className="text-xs text-slate-400 mb-6 leading-relaxed">
@@ -756,30 +790,40 @@ WebDriverWait(driver, 10).until(
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => posthog.capture('clicked_install_chrome_store')}
-                className="w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold text-center transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] flex items-center justify-center gap-1.5 active:scale-95"
+                className="w-full py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono font-medium text-center transition-all border border-slate-700 flex items-center justify-center gap-1.5 active:scale-95"
               >
                 <span>Add to Chrome — Free</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </a>
             </div>
 
-            {/* Pro Lifetime Tier */}
-            <div className="p-7 rounded-xl bg-[#0f172a] border border-emerald-500/40 relative flex flex-col justify-between shadow-[0_0_30px_rgba(16,185,129,0.1)]">
-              <div className="absolute -top-3 right-6 px-3 py-0.5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-mono font-bold uppercase tracking-wider">
-                LIFETIME ACCESS
-              </div>
+            {/* Pro Lifetime Tier with Frosted-Glass Beta Overlay */}
+            <div className="relative rounded-xl border border-emerald-500/40 bg-zinc-900/80 backdrop-blur-md p-7 flex flex-col justify-between shadow-[0_0_35px_rgba(16,185,129,0.15)] overflow-hidden">
+              {/* Subtle emerald focal glow */}
+              <div className="absolute -top-16 -right-16 w-36 h-36 bg-emerald-500/15 blur-3xl pointer-events-none rounded-full" />
 
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-mono text-emerald-400 font-bold uppercase">Pro Lifetime Tier</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    BETA ACCESS
+                  </span>
                 </div>
-                <div className="flex items-baseline gap-2 mb-4 font-mono">
+
+                <div className="flex items-baseline gap-2 mb-2 font-mono">
                   <span className="text-4xl font-extrabold text-white">$29</span>
                   <span className="text-xs text-slate-500 line-through">$79</span>
-                  <span className="text-xs text-emerald-400 ml-1">One-time payment</span>
+                  <span className="text-xs text-emerald-400 ml-1">One-time deal coming soon</span>
                 </div>
+
+                {/* Status Badge */}
+                <div className="mb-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono text-[11px] font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>🟢 100% FREE DURING BETA — $29 ONE-TIME DEAL COMING SOON</span>
+                </div>
+
                 <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-                  For engineering teams running automated batch fills and exporting to CI/CD test pipelines.
+                  For engineering teams running automated batch fills, shadow DOM traversal, and exporting to CI/CD test pipelines.
                 </p>
 
                 <ul className="space-y-3 text-xs font-mono text-slate-200 mb-8">
@@ -789,32 +833,46 @@ WebDriverWait(driver, 10).until(
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span><strong>AES-256 Local Secret Vault</strong></span>
+                    <span><strong>AES-256 Local Secret Vault</strong> (zero-leak RAM)</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span><strong>CSV Batch Execution Engine</strong></span>
+                    <span><strong>5-Tier Selector Waterfall</strong> &amp; Shadow DOM traversal</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Multi-format code exporters (Playwright, Puppeteer, Python)</span>
+                    <span><strong>Cross-Origin Iframe Routing</strong> &amp; frameId dispatch</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Priority updates &amp; commercial deployment license</span>
+                    <span><strong>SPA Route Interception</strong> with instant input flush</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span><strong>Multi-Format Exporters</strong> (Playwright, Puppeteer, Python, .side)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>MV3 Keep-Alive Alarms for long automation replays</span>
                   </li>
                 </ul>
               </div>
 
-              <a
-                href="https://test.dodopayments.com/buy"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => posthog.capture('clicked_pro_lifetime_checkout')}
-                className="w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold text-center transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] block active:scale-95"
-              >
-                Get Pro Lifetime ($29) — Dodo Payments
-              </a>
+              <div>
+                <a
+                  href={CHROME_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => posthog.capture('clicked_install_free_beta')}
+                  className="w-full py-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-mono font-bold text-center transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <span>Install Free Chrome Extension</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </a>
+                <p className="text-[10px] font-mono text-slate-500 text-center mt-2.5">
+                  ✨ Checkout disabled during Beta • Instant free install from Chrome Web Store
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -832,7 +890,7 @@ WebDriverWait(driver, 10).until(
               className="rounded"
             />
             <span className="text-white font-bold">FlowMacro IDE</span>
-            <span>• Terminal &amp; Security Blueprint Engine</span>
+            <span>• Local Manifest V3 Automation Engine</span>
           </div>
 
           <div className="flex items-center gap-6">
@@ -840,7 +898,7 @@ WebDriverWait(driver, 10).until(
               Privacy Policy (Zero Data)
             </Link>
             <a
-              href="https://github.com"
+              href="https://github.com/Naveen071110/flowmacro"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-emerald-400 transition-colors"
