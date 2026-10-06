@@ -2,28 +2,90 @@ import { SeleniumCommand, CommandType } from '../types/macro';
 import { encryptSecret } from '../shared/crypto';
 
 (() => {
-  if ((window as any).__AUTOMACRO_RECORDER_LOADED__) return;
+  if ((window as any).__FLOWMACRO_RECORDER_LOADED__) return;
+  (window as any).__FLOWMACRO_RECORDER_LOADED__ = true;
   (window as any).__AUTOMACRO_RECORDER_LOADED__ = true;
 
   let isRecording = false;
+  let isPaused = false;
+  let listenersAttached = false;
   let inputDebounceTimer: any = null;
   let lastRecordedInput: { el: HTMLElement; value: string; cmdId: string } | null = null;
   let lastClickTimestamp = 0;
 
+  function checkStorageAndAutoAttach() {
+    const storage = chrome.storage?.session || chrome.storage?.local;
+    if (!storage) return;
+
+    storage.get(['isRecording', 'isPaused', 'targetTabId'], (state: any) => {
+      if (chrome.runtime?.lastError) return;
+      if (state && state.isRecording && !state.isPaused) {
+        isRecording = true;
+        isPaused = false;
+        attachRecorderListeners();
+      } else if (state && state.isRecording && state.isPaused) {
+        isRecording = true;
+        isPaused = true;
+        detachRecorderListeners();
+      }
+    });
+  }
+
   // Listen for direct runtime messages
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-    if (msg.type === 'START_RECORDING') {
+    const action = msg.type || msg.action;
+    if (action === 'START_RECORDING' || action === 'RESUME_RECORDING') {
       isRecording = true;
-      showHudNotification('AutoMacro IDE: Recording Attached');
+      isPaused = false;
+      attachRecorderListeners();
+      showHudNotification(action === 'RESUME_RECORDING' ? 'FlowMacro: Recording Resumed' : 'FlowMacro: Recording Active');
       sendResponse({ status: 'ok' });
-    } else if (msg.type === 'STOP_RECORDING') {
+    } else if (action === 'PAUSE_RECORDING') {
+      flushPendingInput();
+      isPaused = true;
+      detachRecorderListeners();
+      showHudNotification('FlowMacro: Recording Paused');
+      sendResponse({ status: 'ok' });
+    } else if (action === 'STOP_RECORDING') {
       flushPendingInput();
       isRecording = false;
-      showHudNotification('AutoMacro IDE: Recording Stopped');
+      isPaused = false;
+      detachRecorderListeners();
+      showHudNotification('FlowMacro: Recording Stopped');
       sendResponse({ status: 'ok' });
     }
     return true;
   });
+
+  // Storage listener to react immediately across tabs / navigations
+  if (chrome.storage?.onChanged) {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'session' || area === 'local') {
+        if (changes.isRecording !== undefined || changes.isPaused !== undefined) {
+          const storage = chrome.storage?.session || chrome.storage?.local;
+          storage.get(['isRecording', 'isPaused'], (state: any) => {
+            if (chrome.runtime?.lastError) return;
+            if (state && state.isRecording && !state.isPaused) {
+              isRecording = true;
+              isPaused = false;
+              attachRecorderListeners();
+            } else if (state && state.isRecording && state.isPaused) {
+              isRecording = true;
+              isPaused = true;
+              detachRecorderListeners();
+            } else {
+              isRecording = false;
+              isPaused = false;
+              detachRecorderListeners();
+            }
+          });
+        }
+      }
+    });
+  }
+
+  // Auto-attach on script load (upon page navigation/reload)
+  checkStorageAndAutoAttach();
 
   // ============================================================================
   // SELECTOR WATERFALL & TARGET GENERATOR
@@ -249,13 +311,15 @@ import { encryptSecret } from '../shared/crypto';
 
     try {
       chrome.runtime.sendMessage({
+        action: 'RECORD_STEP',
         type: 'RECORDED_COMMAND',
         command,
+        step: command,
       }).catch((err) => {
-        console.warn('[AutoMacro Recorder] Error sending RECORDED_COMMAND:', err);
+        console.debug('[FlowMacro Recorder] Notice sending recorded command:', err);
       });
     } catch (err) {
-      console.warn('[AutoMacro Recorder] Exception posting recorded command:', err);
+      console.debug('[FlowMacro Recorder] Exception posting recorded command:', err);
     }
   }
 
@@ -273,94 +337,122 @@ import { encryptSecret } from '../shared/crypto';
     }
   }
 
-  // Click capture
-  window.addEventListener(
-    'click',
-    (e) => {
-      if (!isRecording) return;
+  // ============================================================================
+  // EVENT LISTENERS HANDLERS
+  // ============================================================================
+  function handleClick(e: MouseEvent) {
+    if (!isRecording || isPaused) return;
+    const rawTarget = e.target as HTMLElement | SVGElement | null;
+    if (!rawTarget) return;
+    if (rawTarget.closest?.('#automacro-hud-container, #flowmacro-hud-container')) return;
+
+    // Synchronously flush any pending input before recording click/submit
+    flushPendingInput();
+
+    const now = Date.now();
+    if (now - lastClickTimestamp < 60) return;
+    lastClickTimestamp = now;
+
+    // Handle SVG elements & clickable button/link containers:
+    // If user clicks a nested <svg>, <path>, or <span> inside a button or link, target the interactive container
+    const interactiveContainer = rawTarget.closest?.(
+      'button, a, input, select, textarea, [role="button"], [role="link"], [role="menuitem"], [role="tab"]'
+    );
+    const target = (interactiveContainer as HTMLElement) || (rawTarget as HTMLElement);
+
+    // Ignore text input click (captured on input/change)
+    if (
+      target.tagName === 'INPUT' &&
+      ['text', 'password', 'email', 'search', 'tel', 'url', 'number'].includes((target as HTMLInputElement).type)
+    ) {
+      return;
+    }
+
+    recordCommand('click', target);
+  }
+
+  function handleInput(e: Event) {
+    if (!isRecording || isPaused) return;
+    const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+    if (!target || !('value' in target)) return;
+    if (target.closest?.('#automacro-hud-container, #flowmacro-hud-container')) return;
+
+    lastRecordedInput = {
+      el: target,
+      value: target.value,
+      cmdId: lastRecordedInput?.cmdId || '',
+    };
+
+    if (inputDebounceTimer) clearTimeout(inputDebounceTimer);
+    inputDebounceTimer = setTimeout(() => {
+      flushPendingInput();
+    }, 650);
+  }
+
+  function handleChange(e: Event) {
+    if (!isRecording || isPaused) return;
+    const target = e.target as HTMLInputElement | HTMLSelectElement;
+    if (!target) return;
+    if (target.closest?.('#automacro-hud-container, #flowmacro-hud-container')) return;
+
+    flushPendingInput();
+
+    if (target.tagName === 'SELECT') {
+      const select = target as HTMLSelectElement;
+      const selectedText = select.options[select.selectedIndex]?.text || select.value;
+      recordCommand('select', target, `label=${selectedText}`);
+    }
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (!isRecording || isPaused) return;
+    if (e.key === 'Enter') {
+      // Synchronously flush pending input before recording form submit
+      flushPendingInput();
       const target = e.target as HTMLElement;
-      if (!target) return;
-      if (target.closest('#automacro-hud-container')) return;
-
-      // Synchronously flush any pending input before recording click/submit
-      flushPendingInput();
-
-      const now = Date.now();
-      if (now - lastClickTimestamp < 60) return;
-      lastClickTimestamp = now;
-
-      // Ignore text input click (captured on input)
-      if (
-        target.tagName === 'INPUT' &&
-        ['text', 'password', 'email', 'search', 'tel'].includes((target as HTMLInputElement).type)
-      ) {
-        return;
+      if (target && target.closest?.('form')) {
+        recordCommand('submit', target.closest('form')!);
       }
+    }
+  }
 
-      recordCommand('click', target);
-    },
-    true
-  );
+  function handleSubmit(e: Event) {
+    if (!isRecording || isPaused) return;
+    flushPendingInput();
+    const form = e.target as HTMLFormElement;
+    if (form) {
+      recordCommand('submit', form);
+    }
+  }
 
-  // Input debounced capture
-  window.addEventListener(
-    'input',
-    (e) => {
-      if (!isRecording) return;
-      const target = e.target as HTMLInputElement | HTMLTextAreaElement;
-      if (!target || !('value' in target)) return;
-      if (target.closest('#automacro-hud-container')) return;
+  function handleBeforeUnload() {
+    flushPendingInput();
+  }
 
-      lastRecordedInput = {
-        el: target,
-        value: target.value,
-        cmdId: lastRecordedInput?.cmdId || '',
-      };
+  function attachRecorderListeners() {
+    if (listenersAttached) return;
+    window.addEventListener('click', handleClick, true);
+    window.addEventListener('input', handleInput, true);
+    window.addEventListener('change', handleChange, true);
+    window.addEventListener('keydown', handleKeydown, true);
+    window.addEventListener('submit', handleSubmit, true);
+    window.addEventListener('beforeunload', handleBeforeUnload, true);
+    window.addEventListener('pagehide', handleBeforeUnload, true);
+    listenersAttached = true;
+  }
 
-      if (inputDebounceTimer) clearTimeout(inputDebounceTimer);
-      inputDebounceTimer = setTimeout(() => {
-        flushPendingInput();
-      }, 650);
-    },
-    true
-  );
-
-  // Select change
-  window.addEventListener(
-    'change',
-    (e) => {
-      if (!isRecording) return;
-      const target = e.target as HTMLInputElement | HTMLSelectElement;
-      if (!target) return;
-      if (target.closest('#automacro-hud-container')) return;
-
-      flushPendingInput();
-
-      if (target.tagName === 'SELECT') {
-        const select = target as HTMLSelectElement;
-        const selectedText = select.options[select.selectedIndex]?.text || select.value;
-        recordCommand('select', target, `label=${selectedText}`);
-      }
-    },
-    true
-  );
-
-  // Enter key for form submit
-  window.addEventListener(
-    'keydown',
-    (e) => {
-      if (!isRecording) return;
-      if (e.key === 'Enter') {
-        // Synchronously flush pending input before recording form submit
-        flushPendingInput();
-        const target = e.target as HTMLElement;
-        if (target && target.closest('form')) {
-          recordCommand('submit', target.closest('form')!);
-        }
-      }
-    },
-    true
-  );
+  function detachRecorderListeners() {
+    flushPendingInput();
+    if (!listenersAttached) return;
+    window.removeEventListener('click', handleClick, true);
+    window.removeEventListener('input', handleInput, true);
+    window.removeEventListener('change', handleChange, true);
+    window.removeEventListener('keydown', handleKeydown, true);
+    window.removeEventListener('submit', handleSubmit, true);
+    window.removeEventListener('beforeunload', handleBeforeUnload, true);
+    window.removeEventListener('pagehide', handleBeforeUnload, true);
+    listenersAttached = false;
+  }
 
   // ============================================================================
   // HUD & FLASH

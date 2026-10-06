@@ -9,7 +9,8 @@
     "sidePanel",
     "storage",
     "tabs",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "webNavigation"
   ],
   "host_permissions": [
     "<all_urls>"

@@ -13,6 +13,7 @@ interface SessionData {
   targetWindowId: number | null;
   targetTabId: number | null;
   isRecording: boolean;
+  isRecordingPaused?: boolean;
   activeSuiteId: string | null;
   sessionState: ReplaySessionState;
   activeSuite: TestSuite | null;
@@ -29,6 +30,7 @@ let targetWindowId: number | null = null;
 let targetTabId: number | null = null;
 
 let isRecording = false;
+let isRecordingPaused = false;
 let activeSuiteId: string | null = null;
 
 let sessionState: ReplaySessionState = {
@@ -52,6 +54,37 @@ let replayAbortController: { aborted: boolean; paused: boolean } | null = null;
 // ============================================================================
 // CHROME.STORAGE.SESSION PERSISTENCE & REHYDRATION
 // ============================================================================
+async function updateRecordingSessionStorage(recording: boolean, paused: boolean, tabId: number | null) {
+  isRecording = recording;
+  isRecordingPaused = paused;
+  if (tabId !== undefined) {
+    targetTabId = tabId;
+  }
+  const payload = {
+    isRecording: recording,
+    isPaused: paused,
+    targetTabId: targetTabId,
+  };
+  try {
+    if (chrome.storage?.session) {
+      await chrome.storage.session.set(payload);
+    }
+  } catch (err) {
+    console.debug('[FlowMacro] session storage set notice:', err);
+  }
+  try {
+    if (chrome.storage?.local) {
+      await chrome.storage.local.set({
+        automacro_recording_active: recording && !paused,
+        ...payload,
+      });
+    }
+  } catch (err) {
+    console.debug('[FlowMacro] local storage set notice:', err);
+  }
+  await persistSession();
+}
+
 async function persistSession(): Promise<void> {
   try {
     if (chrome.storage?.session) {
@@ -62,6 +95,7 @@ async function persistSession(): Promise<void> {
           targetWindowId,
           targetTabId,
           isRecording,
+          isRecordingPaused,
           activeSuiteId,
           sessionState,
           activeSuite,
@@ -88,6 +122,7 @@ async function rehydrateSessionState(): Promise<void> {
         if (data.targetWindowId !== undefined) targetWindowId = data.targetWindowId ?? null;
         if (data.targetTabId !== undefined) targetTabId = data.targetTabId ?? null;
         if (data.isRecording !== undefined) isRecording = data.isRecording;
+        if (data.isRecordingPaused !== undefined) isRecordingPaused = data.isRecordingPaused;
         if (data.activeSuiteId !== undefined) activeSuiteId = data.activeSuiteId ?? null;
         if (data.sessionState !== undefined) sessionState = data.sessionState;
         if (data.activeSuite !== undefined) activeSuite = data.activeSuite ?? null;
@@ -191,8 +226,27 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 });
 
 // ============================================================================
-// PAGE LIFECYCLE SYNC (chrome.tabs.onUpdated)
+// PAGE LIFECYCLE & WEB NAVIGATION SYNC
 // ============================================================================
+if (chrome.webNavigation?.onCompleted) {
+  chrome.webNavigation.onCompleted.addListener(async (details) => {
+    if (details.frameId !== 0) return; // Top-level frame only
+    await rehydrationPromise;
+
+    if (details.tabId === targetTabId) {
+      if (isRecording && !isRecordingPaused) {
+        try {
+          await ensureScriptInjected(details.tabId, 'content_scripts/recorder.js');
+          chrome.tabs.sendMessage(details.tabId, { type: 'START_RECORDING' }).catch(() => {});
+          addLog(`[Navigation] Recorder attached on redirect: ${details.url}`, 'info');
+        } catch (e) {
+          console.debug('[FlowMacro] webNavigation injection notice:', e);
+        }
+      }
+    }
+  });
+}
+
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   await rehydrationPromise;
 
@@ -200,10 +254,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 
   if (changeInfo.status === 'complete') {
     // If recording on target tab, ensure recorder script is injected
-    if (isRecording) {
+    if (isRecording && !isRecordingPaused) {
       await ensureScriptInjected(tabId, 'content_scripts/recorder.js');
       chrome.tabs.sendMessage(tabId, { type: 'START_RECORDING' }).catch((err) => {
-        console.debug(`[AutoMacro] Tab ${tabId} START_RECORDING notice:`, err);
+        console.debug(`[FlowMacro] Tab ${tabId} START_RECORDING notice:`, err);
       });
       addLog(`[Navigation] Injected recorder into ${tab.url || 'target page'}`, 'info');
     }
@@ -251,23 +305,43 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 async function handleIncomingMessage(msg: any, _sender: chrome.runtime.MessageSender) {
   await rehydrationPromise;
+  const actionType = msg.type || msg.action;
 
-  switch (msg.type) {
+  switch (actionType) {
     case 'START_RECORDING': {
       return await startRecordingFlow(msg.baseUrl, msg.suiteId);
+    }
+
+    case 'PAUSE_RECORDING': {
+      return await pauseRecordingFlow();
+    }
+
+    case 'RESUME_RECORDING': {
+      return await resumeRecordingFlow();
     }
 
     case 'STOP_RECORDING': {
       return await stopRecording();
     }
 
-    case 'RECORDED_COMMAND': {
-      const command: SeleniumCommand = msg.command;
-      // Forward command to IDE window
-      sendToIde({
-        type: 'RECORDED_COMMAND',
-        command,
-      });
+    case 'GET_RECORDING_STATE': {
+      return {
+        isRecording,
+        isPaused: isRecordingPaused,
+        targetTabId,
+      };
+    }
+
+    case 'RECORDED_COMMAND':
+    case 'RECORD_STEP': {
+      const command: SeleniumCommand = msg.command || msg.step;
+      if (command) {
+        // Forward command to IDE window
+        sendToIde({
+          type: 'RECORDED_COMMAND',
+          command,
+        });
+      }
       return { status: 'command_forwarded' };
     }
 
@@ -317,7 +391,6 @@ async function startRecordingFlow(rawBaseUrl: string, suiteId: string) {
     baseUrl = 'https://' + baseUrl;
   }
 
-  isRecording = true;
   activeSuiteId = suiteId;
 
   addLog(`Creating managed target window for Base URL: ${baseUrl}`, 'info');
@@ -326,7 +399,14 @@ async function startRecordingFlow(rawBaseUrl: string, suiteId: string) {
   const tab = await chrome.tabs.create({ url: baseUrl });
   targetTabId = tab.id || null;
   targetWindowId = tab.windowId || null;
-  await persistSession();
+  await updateRecordingSessionStorage(true, false, targetTabId);
+
+  sendToIde({
+    type: 'RECORDING_STATE_CHANGED',
+    isRecording: true,
+    isPaused: false,
+    targetTabId,
+  });
 
   // Emit Step 1: Open command
   const openCommand: SeleniumCommand = {
@@ -348,33 +428,81 @@ async function startRecordingFlow(rawBaseUrl: string, suiteId: string) {
   if (targetTabId) {
     waitForTabComplete(targetTabId)
       .then(async () => {
-        if (isRecording && targetTabId) {
+        if (isRecording && !isRecordingPaused && targetTabId) {
           await ensureScriptInjected(targetTabId, 'content_scripts/recorder.js');
           chrome.tabs.sendMessage(targetTabId, { type: 'START_RECORDING' }).catch((err) => {
-            console.debug(`[AutoMacro] Target tab ${targetTabId} START_RECORDING notice:`, err);
+            console.debug(`[FlowMacro] Target tab ${targetTabId} START_RECORDING notice:`, err);
           });
         }
       })
       .catch((err) => {
-        console.warn('[AutoMacro] Error during target tab initialization:', err);
+        console.warn('[FlowMacro] Error during target tab initialization:', err);
       });
   }
 
   return { status: 'recording_active', targetTabId, openCommand };
 }
 
-async function stopRecording() {
-  isRecording = false;
-  activeSuiteId = null;
-  await persistSession();
+async function pauseRecordingFlow() {
+  if (!isRecording) return { status: 'not_recording' };
+  await updateRecordingSessionStorage(true, true, targetTabId);
 
   if (targetTabId) {
-    chrome.tabs.sendMessage(targetTabId, { type: 'STOP_RECORDING' }).catch((err) => {
-      console.debug(`[AutoMacro] Target tab ${targetTabId} STOP_RECORDING notice:`, err);
+    chrome.tabs.sendMessage(targetTabId, { type: 'PAUSE_RECORDING' }).catch((err) => {
+      console.debug(`[FlowMacro] Target tab ${targetTabId} PAUSE_RECORDING notice:`, err);
     });
   }
 
-  addLog('Recording stopped.', 'info');
+  sendToIde({
+    type: 'RECORDING_STATE_CHANGED',
+    isRecording: true,
+    isPaused: true,
+    targetTabId,
+  });
+
+  addLog('Recording paused.', 'warn');
+  return { status: 'recording_paused' };
+}
+
+async function resumeRecordingFlow() {
+  if (!isRecording) return { status: 'not_recording' };
+  await updateRecordingSessionStorage(true, false, targetTabId);
+
+  if (targetTabId) {
+    chrome.tabs.sendMessage(targetTabId, { type: 'RESUME_RECORDING' }).catch((err) => {
+      console.debug(`[FlowMacro] Target tab ${targetTabId} RESUME_RECORDING notice:`, err);
+    });
+  }
+
+  sendToIde({
+    type: 'RECORDING_STATE_CHANGED',
+    isRecording: true,
+    isPaused: false,
+    targetTabId,
+  });
+
+  addLog('Recording resumed.', 'info');
+  return { status: 'recording_resumed' };
+}
+
+async function stopRecording() {
+  if (targetTabId) {
+    chrome.tabs.sendMessage(targetTabId, { type: 'STOP_RECORDING' }).catch((err) => {
+      console.debug(`[FlowMacro] Target tab ${targetTabId} STOP_RECORDING notice:`, err);
+    });
+  }
+
+  await updateRecordingSessionStorage(false, false, null);
+  activeSuiteId = null;
+
+  sendToIde({
+    type: 'RECORDING_STATE_CHANGED',
+    isRecording: false,
+    isPaused: false,
+    targetTabId: null,
+  });
+
+  addLog('Recording stopped and finalized.', 'info');
   return { status: 'recording_stopped' };
 }
 
