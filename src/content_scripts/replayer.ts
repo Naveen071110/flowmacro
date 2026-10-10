@@ -159,14 +159,44 @@ import { decryptSecret } from '../shared/crypto';
 
       if (target.startsWith('css=')) {
         const cssVal = target.replace(/^css=/, '');
-        return doc.querySelector(cssVal);
+        try {
+          const direct = doc.querySelector(cssVal);
+          if (direct) return direct;
+        } catch (_) {}
+
+        // Fallback 1: If selector contains emojis / non-ASCII unicode characters (e.g. Clerk's 🔒️),
+        // strip them from class identifiers and retry query
+        if (/[^\x00-\x7F]/.test(cssVal)) {
+          try {
+            const sanitized = cssVal.replace(/\.[a-zA-Z0-9_-]*[^\x00-\x7F\s>+~#.:\[\]]+[a-zA-Z0-9_-]*/g, '');
+            if (sanitized && sanitized !== cssVal) {
+              const cleanedEl = doc.querySelector(sanitized);
+              if (cleanedEl) return cleanedEl;
+            }
+          } catch (_) {}
+        }
+
+        // Fallback 2: If selector targeted a button and failed (e.g. positional index shifted),
+        // look for primary action or submit button in the container
+        if (cssVal.includes('button')) {
+          try {
+            const btn = doc.querySelector('button[type="submit"], button.cl-formButtonPrimary, button.btn-primary');
+            if (btn) return btn;
+          } catch (_) {}
+        }
+
+        return null;
       }
 
       if (target.startsWith('xpath=')) {
         const xpathVal = target.replace(/^xpath=/, '');
         if ('evaluate' in doc && typeof (doc as Document).evaluate === 'function') {
-          const res = (doc as Document).evaluate(xpathVal, doc as Document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-          return res.singleNodeValue as Element;
+          try {
+            const res = (doc as Document).evaluate(xpathVal, doc as Document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+            if (res.singleNodeValue) return res.singleNodeValue as Element;
+          } catch (xpathErr) {
+            console.debug('[AutoMacro Replayer] XPath evaluation error:', xpathErr);
+          }
         }
       }
 
@@ -178,13 +208,29 @@ import { decryptSecret } from '../shared/crypto';
 
       if (target.startsWith('//') || target.startsWith('(')) {
         if ('evaluate' in doc && typeof (doc as Document).evaluate === 'function') {
-          const res = (doc as Document).evaluate(target, doc as Document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-          return res.singleNodeValue as Element;
+          try {
+            const res = (doc as Document).evaluate(target, doc as Document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+            if (res.singleNodeValue) return res.singleNodeValue as Element;
+          } catch (_) {}
         }
       }
 
       // Default to standard CSS selector
-      return doc.querySelector(target);
+      try {
+        const defaultEl = doc.querySelector(target);
+        if (defaultEl) return defaultEl;
+      } catch (_) {}
+
+      if (/[^\x00-\x7F]/.test(target)) {
+        try {
+          const sanitized = target.replace(/\.[a-zA-Z0-9_-]*[^\x00-\x7F\s>+~#.:\[\]]+[a-zA-Z0-9_-]*/g, '');
+          if (sanitized && sanitized !== target) {
+            const cleanedEl = doc.querySelector(sanitized);
+            if (cleanedEl) return cleanedEl;
+          }
+        } catch (_) {}
+      }
+      return null;
     } catch (syntaxErr) {
       console.warn(`[AutoMacro Replayer] Selector evaluation failed for "${target}":`, syntaxErr);
       return null;

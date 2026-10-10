@@ -12,6 +12,8 @@ import { encryptSecret } from '../shared/crypto';
   let inputDebounceTimer: any = null;
   let lastRecordedInput: { el: HTMLElement; value: string; cmdId: string } | null = null;
   let lastClickTimestamp = 0;
+  let lastClickedElement: HTMLElement | null = null;
+  let lastSubmitTimestamp = 0;
 
   function checkStorageAndAutoAttach() {
     const storage = chrome.storage?.session || chrome.storage?.local;
@@ -179,11 +181,38 @@ import { encryptSecret } from '../shared/crypto';
       list.push([`name=${name}`, 'name']);
     }
 
-    // 5. Clean CSS Path (includes shadow pierce path)
+    // 5. Semantic locators for Buttons, Links, and Form Inputs
+    const tag = element.tagName.toLowerCase();
+    if (tag === 'button' || (tag === 'input' && (element as HTMLInputElement).type === 'submit')) {
+      const btnText = (element.textContent || (element as HTMLInputElement).value || '').trim();
+      if (btnText && btnText.length > 0 && btnText.length <= 40 && !btnText.includes('\n') && !btnText.includes('"')) {
+        list.push([`xpath=//button[normalize-space()="${btnText}"]`, 'button:text']);
+      }
+      const btnType = element.getAttribute('type');
+      if (btnType === 'submit') {
+        list.push([`css=button[type="submit"]`, 'button:type']);
+      }
+      const semanticClass = Array.from(element.classList).find((c) =>
+        /(primary|submit|login|signin|confirm|action|btn-main)/i.test(c) && /^[a-zA-Z0-9_-]+$/.test(c)
+      );
+      if (semanticClass) {
+        list.push([`css=button.${semanticClass}`, 'button:class']);
+      }
+    } else if (tag === 'input') {
+      const inputType = element.getAttribute('type');
+      const placeholder = element.getAttribute('placeholder');
+      if (inputType === 'password') {
+        list.push([`css=input[type="password"]`, 'input:type']);
+      } else if (placeholder && placeholder.length <= 40 && !placeholder.includes('"')) {
+        list.push([`css=input[placeholder="${placeholder}"]`, 'input:placeholder']);
+      }
+    }
+
+    // 6. Clean CSS Path (includes shadow pierce path)
     const cssPath = generateCssPath(element);
     list.push([`css=${cssPath}`, 'css:finder']);
 
-    // 6. XPath (if not inside shadow root)
+    // 7. XPath (if not inside shadow root)
     if (!isShadow) {
       const xpath = generateXPath(element);
       if (xpath) {
@@ -191,7 +220,7 @@ import { encryptSecret } from '../shared/crypto';
       }
     }
 
-    // 7. If inside Shadow DOM, generate deep shadow-piercing locators (e.g. shadow=host >>> inner)
+    // 8. If inside Shadow DOM, generate deep shadow-piercing locators (e.g. shadow=host >>> inner)
     let shadowHostTarget: string | undefined;
     if (isShadow) {
       const hostLocators = shadowHosts.map((h) => {
@@ -246,6 +275,7 @@ import { encryptSecret } from '../shared/crypto';
     ) {
       let selector = current.tagName.toLowerCase();
 
+      // Only allow standard ASCII class names; discard emojis (like Clerk's 🔒️) and dynamic hashes
       const classes = Array.from(current.classList).filter(
         (c) =>
           !c.startsWith('hover:') &&
@@ -255,7 +285,8 @@ import { encryptSecret } from '../shared/crypto';
           !c.startsWith('md:') &&
           !c.startsWith('lg:') &&
           !/^[0-9a-f]{8,}$/i.test(c) &&
-          c.length < 25
+          c.length < 35 &&
+          /^[a-zA-Z0-9_-]+$/.test(c)
       );
 
       if (classes.length > 0) {
@@ -292,6 +323,19 @@ import { encryptSecret } from '../shared/crypto';
     if (el.nodeType !== Node.ELEMENT_NODE) return '';
     if (el === document.body) return '//body';
 
+    const tagName = el.tagName.toLowerCase();
+    const text = (el.textContent || '').trim();
+    if (
+      (tagName === 'button' || tagName === 'a') &&
+      text &&
+      text.length > 0 &&
+      text.length <= 40 &&
+      !text.includes('\n') &&
+      !text.includes('"')
+    ) {
+      return `//${tagName}[normalize-space()="${text}"]`;
+    }
+
     let index = 1;
     let sibling = el.previousElementSibling;
     while (sibling) {
@@ -301,7 +345,6 @@ import { encryptSecret } from '../shared/crypto';
       sibling = sibling.previousElementSibling;
     }
 
-    const tagName = el.tagName.toLowerCase();
     const parentPath = el.parentElement && el.parentElement !== document.body ? generateXPath(el.parentElement) : '';
     return `${parentPath}//${tagName}[${index}]`;
   }
@@ -422,16 +465,18 @@ import { encryptSecret } from '../shared/crypto';
     // Synchronously flush any pending input before recording click/submit
     flushPendingInput();
 
-    const now = Date.now();
-    if (now - lastClickTimestamp < 60) return;
-    lastClickTimestamp = now;
-
     // Handle SVG elements & clickable button/link containers:
     // If user clicks a nested <svg>, <path>, or <span> inside a button or link, target the interactive container
     const interactiveContainer = rawTarget.closest?.(
       'button, a, input, select, textarea, [role="button"], [role="link"], [role="menuitem"], [role="tab"]'
     );
     const target = (interactiveContainer as HTMLElement) || (rawTarget as HTMLElement);
+
+    const now = Date.now();
+    // Debounce rapid duplicate clicks on the exact same element within 350ms
+    if (now - lastClickTimestamp < 350 && lastClickedElement === target) return;
+    lastClickTimestamp = now;
+    lastClickedElement = target;
 
     // Ignore text input click (captured on input/change)
     if (
@@ -483,8 +528,12 @@ import { encryptSecret } from '../shared/crypto';
       // Synchronously flush pending input before recording form submit
       flushPendingInput();
       const target = e.target as HTMLElement;
-      if (target && target.closest?.('form')) {
-        recordCommand('submit', target.closest('form')!);
+      const form = target && target.closest ? (target.closest('form') as HTMLFormElement | null) : null;
+      if (form) {
+        const now = Date.now();
+        if (now - lastSubmitTimestamp < 700) return;
+        lastSubmitTimestamp = now;
+        recordCommand('submit', form);
       }
     }
   }
@@ -493,9 +542,24 @@ import { encryptSecret } from '../shared/crypto';
     if (!isRecording || isPaused) return;
     flushPendingInput();
     const form = e.target as HTMLFormElement;
-    if (form) {
-      recordCommand('submit', form);
+    if (!form) return;
+
+    const now = Date.now();
+    // 1. Debounce rapid submit events on forms within 700ms
+    if (now - lastSubmitTimestamp < 700) return;
+
+    // 2. If a click on a button inside this form was already recorded within the last 700ms,
+    // skip recording a redundant SUBMIT command because the button click already triggered submission!
+    if (
+      lastClickedElement &&
+      now - lastClickTimestamp < 700 &&
+      form.contains(lastClickedElement)
+    ) {
+      return;
     }
+
+    lastSubmitTimestamp = now;
+    recordCommand('submit', form);
   }
 
   function handleBeforeUnload() {
