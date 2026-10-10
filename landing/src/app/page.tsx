@@ -37,6 +37,7 @@ import {
   HelpCircle,
   BookOpen,
   LifeBuoy,
+  Github,
 } from "lucide-react";
 
 const CHROME_STORE_URL =
