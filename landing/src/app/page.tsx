@@ -327,7 +327,7 @@ WebDriverWait(driver, 10).until(
           </p>
 
           {/* Primary CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
             <a
               href={CHROME_STORE_URL}
               target="_blank"
@@ -345,6 +345,25 @@ WebDriverWait(driver, 10).until(
             >
               <Terminal className="w-4 h-4 text-emerald-400" />
               <span>View Code Exporters</span>
+            </a>
+          </div>
+
+          {/* Product Hunt Featured Badge */}
+          <div className="flex justify-center mb-12">
+            <a
+              href="https://www.producthunt.com/products/flowmacro?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-flowmacro"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block transition-transform hover:scale-105 active:scale-95 duration-200"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1276136&amp;theme=dark&amp;t=1791743793797"
+                alt="FlowMacro - Zero-backend web automation &amp; Playwright code recorder | Product Hunt"
+                width={250}
+                height={54}
+                className="w-[250px] h-[54px]"
+              />
             </a>
           </div>
 
