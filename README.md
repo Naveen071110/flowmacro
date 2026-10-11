@@ -119,5 +119,5 @@ Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information
 ---
 
 <div align="center">
-  <sub>Crafted with ❤️ by <a href="https://github.com/Naveen071110">Naveen Guru</a> • Follow on <a href="https://x.com">X / Twitter</a></sub>
+  <sub>Crafted with ❤️ by <a href="https://github.com/Naveen071110">Naveen Guru</a> • Follow on <a href="https://x.com@NaveenBale">X / Twitter</a></sub>
 </div>
