@@ -280,10 +280,10 @@ WebDriverWait(driver, 10).until(
             <a href="#pricing" className="hover:text-emerald-400 transition-colors">
               Pricing
             </a>
-            <a href="#docs" className="hover:text-emerald-400 transition-colors flex items-center gap-1">
+            <Link href="/docs" className="hover:text-emerald-400 transition-colors flex items-center gap-1">
               <BookOpen className="w-3 h-3 text-emerald-400" />
               Docs &amp; Help
-            </a>
+            </Link>
             <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
               Privacy
             </Link>
@@ -907,151 +907,99 @@ WebDriverWait(driver, 10).until(
       </section>
 
       
-      {/* 6. DOCUMENTATION & COMMON TROUBLESHOOTING GUIDE */}
-      <section id="docs" className="py-24 px-6 border-t border-slate-800/80 bg-[#070a0f] relative">
+      {/* 6. DOCUMENTATION & SUPPORT PORTAL TEASER */}
+      <section id="docs" className="py-20 px-6 border-t border-slate-800/80 bg-[#070a0f] relative">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-12">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 font-mono text-xs font-semibold mb-4 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
               <BookOpen className="w-3.5 h-3.5" />
               <span>DOCUMENTATION &amp; TROUBLESHOOTING</span>
             </div>
             <h2 className="text-3xl font-extrabold text-white tracking-tight mb-3">
-              Quick Start &amp; Common Help Topics
+              Developer Guides &amp; Knowledge Base
             </h2>
             <p className="text-xs font-mono text-slate-400">
-              Pragmatic guides for everyday browser automation, multi-step logins, credential protection, and exporting tests.
+              In-depth architecture specifications, auth edge-case solutions, and test exporter recipes.
             </p>
           </div>
 
-          {/* 3-Step Quick Start Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-            <div className="p-6 rounded-xl bg-[#0b0f17] border border-slate-800/80 flex flex-col justify-between hover:border-slate-700 transition-all">
+          {/* 3 Topic Cards linking directly to /docs */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <Link
+              href="/docs#quickstart"
+              className="p-6 rounded-xl bg-[#0b0f17] border border-slate-800/80 hover:border-emerald-500/40 transition-all group flex flex-col justify-between"
+            >
               <div>
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center mb-4">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                   01
                 </div>
-                <h3 className="text-sm font-bold text-white font-mono mb-2">Start Recording</h3>
+                <h3 className="text-sm font-bold text-white font-mono mb-2 flex items-center justify-between">
+                  <span>Quick Start Guide</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+                </h3>
                 <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                  Click the FlowMacro icon in your Chrome toolbar, type your target Base URL, and hit <strong className="text-emerald-400 font-mono">Record</strong>. A standalone IDE window opens and synchronizes with your active browser tab.
+                  Learn how to install, attach controller tabs, record workflows with zero latency, and replay macros at 0.5x, 1x, or 2x speed.
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-slate-800/60 text-[11px] font-mono text-slate-500">
-                Tip: Works smoothly across modern SPAs (React, Next.js, Vue, Clerk).
+              <div className="mt-4 pt-3 border-t border-slate-800/60 text-[11px] font-mono text-emerald-400">
+                Setup &bull; Controls &bull; Hotkeys &rarr;
               </div>
-            </div>
+            </Link>
 
-            <div className="p-6 rounded-xl bg-[#0b0f17] border border-slate-800/80 flex flex-col justify-between hover:border-slate-700 transition-all">
+            <Link
+              href="/docs#auth"
+              className="p-6 rounded-xl bg-[#0b0f17] border border-slate-800/80 hover:border-emerald-500/40 transition-all group flex flex-col justify-between"
+            >
               <div>
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center mb-4">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono font-bold text-xs flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                   02
                 </div>
-                <h3 className="text-sm font-bold text-white font-mono mb-2">Interact Naturally</h3>
+                <h3 className="text-sm font-bold text-white font-mono mb-2 flex items-center justify-between">
+                  <span>Multi-Step Logins &amp; Auth</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 transition-colors" />
+                </h3>
                 <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                  Click buttons, type searches, and navigate pages. FlowMacro generates resilient 5-tier locators (data-testid &rarr; ID &rarr; ARIA &rarr; CSS &rarr; XPath) and penetrates open Shadow DOMs in real time.
+                  Survive Clerk, Supabase, and NextAuth two-screen auth flows. Resolve ghost submit steps and timing delays during screen transitions.
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-slate-800/60 text-[11px] font-mono text-slate-500">
-                Passwords are auto-encrypted with local AES-256 in memory.
+              <div className="mt-4 pt-3 border-t border-slate-800/60 text-[11px] font-mono text-amber-400">
+                Auth Flows &bull; SPA Redirects &rarr;
               </div>
-            </div>
+            </Link>
 
-            <div className="p-6 rounded-xl bg-[#0b0f17] border border-slate-800/80 flex flex-col justify-between hover:border-slate-700 transition-all">
+            <Link
+              href="/docs#errors"
+              className="p-6 rounded-xl bg-[#0b0f17] border border-slate-800/80 hover:border-emerald-500/40 transition-all group flex flex-col justify-between"
+            >
               <div>
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center mb-4">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 font-mono font-bold text-xs flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                   03
                 </div>
-                <h3 className="text-sm font-bold text-white font-mono mb-2">Replay &amp; Export</h3>
+                <h3 className="text-sm font-bold text-white font-mono mb-2 flex items-center justify-between">
+                  <span>&quot;Target Not Found&quot; Fixes</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-blue-400 transition-colors" />
+                </h3>
                 <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                  Hit <strong className="text-emerald-400 font-mono">Stop</strong> when done. Replay directly in your browser with adjustable speed (0.5x, 1x, 2x), or export to Playwright (TS), Puppeteer (JS), Python Selenium, or .side JSON.
+                  Diagnose 6000ms timeouts, switch between 5-tier waterfall locators, insert pause steps, and penetrate Shadow DOMs.
                 </p>
               </div>
-              <div className="mt-4 pt-3 border-t border-slate-800/60 text-[11px] font-mono text-slate-500">
-                Zero telemetry &bull; Zero remote servers &bull; 100% Client-Side.
+              <div className="mt-4 pt-3 border-t border-slate-800/60 text-[11px] font-mono text-blue-400">
+                Waterfall Locators &bull; Timing Fixes &rarr;
               </div>
-            </div>
+            </Link>
           </div>
 
-          {/* Common Issues & Helpful Solutions */}
-          <div className="mb-16">
-            <div className="flex items-center gap-2 mb-6">
-              <HelpCircle className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-lg font-bold text-white font-mono">Common Issues &amp; Quick Fixes</h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Issue 1: Multi-Step Login / Auth Forms */}
-              <div className="p-6 rounded-xl bg-[#0b0f17] border border-slate-800/80 hover:border-slate-700/80 transition-all">
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 text-xs font-mono font-bold border border-amber-500/20">
-                    AUTH
-                  </span>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-200 font-mono">Multi-step login flows (Clerk, Supabase, NextAuth)</h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      On sites with multi-screen authentication (e.g. enter username &rarr; click Continue &rarr; enter password screen), duplicate submit clicks or transient elements can be recorded during the transition.
-                    </p>
-                  </div>
-                </div>
-                <div className="p-3.5 rounded-lg bg-slate-900/90 border border-slate-800 text-xs font-mono text-emerald-300">
-                  <strong className="text-white">Quick Fix:</strong> In the FlowMacro IDE table, simply delete any extra ghost <code>submit</code> steps between entering your username and typing your password. FlowMacro will cleanly execute Step 1 (Username) &rarr; Click Continue &rarr; Step 2 (Password) &rarr; Click Sign In.
-                </div>
-              </div>
-
-              {/* Issue 2: Password & Sensitive Field Privacy */}
-              <div className="p-6 rounded-xl bg-[#0b0f17] border border-slate-800/80 hover:border-slate-700/80 transition-all">
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-mono font-bold border border-emerald-500/20">
-                    SECURITY
-                  </span>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-200 font-mono">Are my passwords or API keys safe?</h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      You never need to worry about credentials leaking into plain-text JSON files or git commits.
-                    </p>
-                  </div>
-                </div>
-                <div className="p-3.5 rounded-lg bg-slate-900/90 border border-slate-800 text-xs font-mono text-emerald-300">
-                  <strong className="text-white">How It Works:</strong> Sensitive fields are encrypted with AES-256-GCM in memory and masked with <code>{"{{"}SECRET_PASSWORD{"}}"}</code>. When exported to Playwright or Python, FlowMacro generates clean <code>process.env.AUTO_MACRO_PASSWORD</code> references so credentials stay secure.
-                </div>
-              </div>
-
-              {/* Issue 3: Step says "Target not found in DOM" */}
-              <div className="p-6 rounded-xl bg-[#0b0f17] border border-slate-800/80 hover:border-slate-700/80 transition-all">
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-mono font-bold border border-blue-500/20">
-                    TIMING
-                  </span>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-200 font-mono">Replay says &quot;Target not found within 5000ms&quot;</h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      Occurs if a slow network request or complex animation delays the element from rendering in the DOM.
-                    </p>
-                  </div>
-                </div>
-                <div className="p-3.5 rounded-lg bg-slate-900/90 border border-slate-800 text-xs font-mono text-emerald-300">
-                  <strong className="text-white">Quick Fix:</strong> FlowMacro automatically attempts 5 fallback selectors (data-testid &rarr; ID &rarr; ARIA &rarr; CSS &rarr; XPath). If a site takes several seconds to load, insert a brief <code>wait</code> step (e.g. 1500ms) or click the step in the IDE to pick an alternate locator.
-                </div>
-              </div>
-
-              {/* Issue 4: Editing or Deleting Recorded Steps */}
-              <div className="p-6 rounded-xl bg-[#0b0f17] border border-slate-800/80 hover:border-slate-700/80 transition-all">
-                <div className="flex items-start gap-3 mb-3">
-                  <span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400 text-xs font-mono font-bold border border-purple-500/20">
-                    EDITING
-                  </span>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-200 font-mono">Made a mistake while recording?</h4>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      You don&apos;t have to throw away your recording and start over if you accidentally clicked something.
-                    </p>
-                  </div>
-                </div>
-                <div className="p-3.5 rounded-lg bg-slate-900/90 border border-slate-800 text-xs font-mono text-emerald-300">
-                  <strong className="text-white">Quick Fix:</strong> In the IDE table, use the &uarr; and &darr; arrows to reorder steps, click the Trash icon to remove unwanted steps, or click any row to edit its selector, command, or value directly in the Command Inspector.
-                </div>
-              </div>
-            </div>
+          {/* Central Portal Link Button */}
+          <div className="text-center mb-16">
+            <Link
+              href="/docs"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono text-xs font-bold transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95"
+            >
+              <BookOpen className="w-4 h-4" />
+              <span>Explore Full Documentation &amp; Troubleshooting Guide</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
 
           {/* Contact & Support Banner */}
@@ -1091,7 +1039,7 @@ WebDriverWait(driver, 10).until(
         </div>
       </section>
 
-      {/* 6. FOOTER */}
+      {/* 7. FOOTER */}
       <footer className="border-t border-slate-800/80 bg-[#090d14] py-10 px-6 text-xs font-mono text-slate-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5 text-slate-400">
@@ -1106,10 +1054,19 @@ WebDriverWait(driver, 10).until(
             <span>• Local Manifest V3 Automation Engine</span>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-6">
+            <Link href="/docs" className="hover:text-emerald-400 transition-colors">
+              Docs &amp; Help
+            </Link>
             <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
               Privacy Policy (Zero Data)
             </Link>
+            <a
+              href="mailto:contact@naveensingh.guru"
+              className="hover:text-emerald-400 transition-colors"
+            >
+              Support: contact@naveensingh.guru
+            </a>
             <a
               href="https://github.com/Naveen071110/flowmacro"
               target="_blank"
