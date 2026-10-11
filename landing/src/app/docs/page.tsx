@@ -1,7 +1,8 @@
-import React from "react";
+"use client";
+
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import type { Metadata } from "next";
 import {
   ArrowLeft,
   BookOpen,
@@ -25,23 +26,56 @@ import {
   Cpu,
   Check,
   FileCode,
+  Search,
+  Key,
+  Clock,
+  Compass,
+  Workflow,
+  ShieldAlert,
+  Boxes,
+  Sliders,
+  Filter,
 } from "lucide-react";
-
-export const metadata: Metadata = {
-  title: "FlowMacro Documentation & Knowledge Base — Guides & Troubleshooting",
-  description:
-    "Complete technical documentation and troubleshooting guide for FlowMacro IDE. Learn how to record macros, configure the 5-tier selector waterfall, solve multi-step auth, and export Playwright tests.",
-};
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/flowmacro-%E2%80%94-web-automatio/agehjimobcongfgkagfjhmlibkkmjppc?hl=en-US&utm_source=ext_sidebar";
 
+interface Category {
+  id: string;
+  name: string;
+  icon: any;
+  count: number;
+}
+
+const CATEGORIES: Category[] = [
+  { id: "all", name: "All Topics", icon: BookOpen, count: 8 },
+  { id: "architecture", name: "Architecture", icon: ServerOff, count: 2 },
+  { id: "quickstart", name: "Quick Start", icon: Compass, count: 3 },
+  { id: "selectors", name: "DOM & Selectors", icon: Layers, count: 4 },
+  { id: "security", name: "Security Vault", icon: Lock, count: 3 },
+  { id: "troubleshooting", name: "Troubleshooting", icon: AlertTriangle, count: 5 },
+  { id: "exporters", name: "Code Exporters", icon: Code2, count: 4 },
+  { id: "reference", name: "Command Reference", icon: Sliders, count: 2 },
+  { id: "support", name: "Support & Help", icon: Mail, count: 2 },
+];
+
 export default function DocsPage() {
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const isVisible = (categoryId: string, keywords: string) => {
+    const matchesCategory = selectedCategory === "all" || selectedCategory === categoryId;
+    const matchesSearch =
+      searchQuery.trim() === "" ||
+      keywords.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  };
+
   return (
     <div className="min-h-screen bg-[#0b0f17] text-slate-200 font-sans selection:bg-emerald-500/20 selection:text-emerald-300 antialiased bg-blueprint-matrix">
-      {/* 1. TOP NAVIGATION BAR */}
-      <header className="border-b border-slate-800/80 bg-[#0b0f17]/90 backdrop-blur-md sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      {/* 1. TOP STICKY NAVIGATION BAR */}
+      <header className="border-b border-slate-800/80 bg-[#0b0f17]/95 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link
               href="/"
@@ -57,11 +91,16 @@ export default function DocsPage() {
               <Image
                 src="/flowmacro_store_icon_128x128.png"
                 alt="FlowMacro Logo"
-                width={20}
-                height={20}
+                width={22}
+                height={22}
                 className="rounded"
               />
-              <span className="text-xs font-mono font-bold text-white">Docs &amp; Help</span>
+              <span className="text-xs font-mono font-bold text-white tracking-wide">
+                FlowMacro Docs &amp; Reference
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                v1.0.2
+              </span>
             </div>
           </div>
 
@@ -73,7 +112,7 @@ export default function DocsPage() {
               className="hidden md:flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg border border-slate-800 bg-[#0f172a]"
             >
               <Github className="w-3.5 h-3.5" />
-              <span>Issues</span>
+              <span>GitHub Issues</span>
             </a>
 
             <a
@@ -82,465 +121,571 @@ export default function DocsPage() {
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-xs font-mono font-bold text-slate-950 bg-emerald-500 hover:bg-emerald-400 px-3.5 py-1.5 rounded-lg transition-all shadow-[0_0_15px_rgba(16,185,129,0.25)] active:scale-95"
             >
-              <span>Add to Chrome</span>
+              <span>Add to Chrome (Free)</span>
               <ExternalLink className="w-3 h-3" />
             </a>
           </div>
         </div>
       </header>
 
-      {/* 2. HERO BANNER */}
-      <section className="py-16 px-6 border-b border-slate-800/80 bg-gradient-to-b from-[#0e1524] to-[#0b0f17]">
-        <div className="max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-semibold mb-4">
+      {/* 2. HERO SEARCH & CLASSIFICATION BANNER */}
+      <section className="py-14 px-6 border-b border-slate-800/80 bg-gradient-to-b from-[#0e1626] to-[#0b0f17]">
+        <div className="max-w-5xl mx-auto text-center space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-semibold">
             <BookOpen className="w-3.5 h-3.5" />
-            <span>KNOWLEDGE BASE &amp; TROUBLESHOOTING</span>
+            <span>CLASSIFIED DOCUMENTATION &amp; TROUBLESHOOTING</span>
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white mb-4 font-mono">
-            FlowMacro Documentation
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-white font-mono">
+            FlowMacro Knowledge Base
           </h1>
 
-          <p className="text-sm md:text-base text-slate-400 max-w-2xl mx-auto font-sans leading-relaxed">
-            Everything you need to master zero-backend browser automation: from recording resilient flows to surviving multi-step logins, safeguarding secrets with AES-256, and exporting test suites.
+          <p className="text-xs md:text-sm text-slate-400 max-w-2xl mx-auto font-sans leading-relaxed">
+            Organized architecture guides, selector waterfall specifications, zero-trust cryptographic secrets, and pragmatic fixes for real-world automation edge cases.
           </p>
 
-          {/* Quick Anchor Jumps */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-2 font-mono text-xs">
-            <a
-              href="#quickstart"
-              className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400 hover:border-emerald-500/40 transition-colors"
-            >
-              01. Quick Start
-            </a>
-            <a
-              href="#waterfall"
-              className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400 hover:border-emerald-500/40 transition-colors"
-            >
-              02. 5-Tier Waterfall
-            </a>
-            <a
-              href="#vault"
-              className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400 hover:border-emerald-500/40 transition-colors"
-            >
-              03. Secret Vault
-            </a>
-            <a
-              href="#auth"
-              className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400 hover:border-emerald-500/40 transition-colors"
-            >
-              04. Multi-Step Login
-            </a>
-            <a
-              href="#errors"
-              className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400 hover:border-emerald-500/40 transition-colors"
-            >
-              05. Target Not Found
-            </a>
-            <a
-              href="#exporters"
-              className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400 hover:border-emerald-500/40 transition-colors"
-            >
-              06. Code Exporters
-            </a>
-            <a
-              href="#support"
-              className="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 transition-colors"
-            >
-              07. Help &amp; Support
-            </a>
+          {/* Real-time search filter input */}
+          <div className="pt-4 max-w-xl mx-auto relative">
+            <div className="relative flex items-center">
+              <Search className="w-4 h-4 absolute left-3.5 text-slate-500 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search topics: Clerk auth, shadow DOM, 6000ms timeout, Playwright, AES-256..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-[#070a0f] border border-slate-800 rounded-xl text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40 transition-all shadow-inner"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 text-xs font-mono text-slate-500 hover:text-slate-300"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Category Tabs Pill Bar */}
+          <div className="pt-6 flex flex-wrap items-center justify-center gap-2 font-mono text-xs">
+            {CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
+              const isActive = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all ${
+                    isActive
+                      ? "bg-emerald-500/15 border-emerald-500/50 text-emerald-300 shadow-sm font-semibold"
+                      : "bg-[#0f172a] border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{cat.name}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* 3. MAIN CONTENT CONTAINER */}
-      <main className="max-w-5xl mx-auto px-6 py-16 space-y-20">
+      {/* 3. MAIN CLASSIFIED CONTENT CONTAINER */}
+      <main className="max-w-5xl mx-auto px-6 py-14 space-y-16">
 
-        {/* SECTION 1: QUICK START GUIDE */}
-        <section id="quickstart" className="scroll-mt-24 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
-              01
-            </div>
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
-                Quick Start: Your First Automation
-              </h2>
-              <p className="text-xs text-slate-400 font-mono">
-                Record, replay, and manage browser actions in under 60 seconds.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="p-5 rounded-xl bg-[#0f172a] border border-slate-800 space-y-3">
-              <div className="flex items-center gap-2 text-white font-mono font-bold text-xs">
-                <span className="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">
-                  1
+        {/* =========================================================================
+            SECTION 1: ARCHITECTURE & ZERO-BACKEND SPEC
+            ========================================================================= */}
+        {isVisible("architecture", "architecture components manifest v3 background service worker local storage privacy") && (
+          <section id="architecture" className="scroll-mt-24 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
+                01
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold block">
+                  Category: System Design
                 </span>
-                <span>Open Controller IDE</span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                Click the FlowMacro icon in your Chrome extensions bar. A standalone 960 &times; 750px controller window appears, connected to your active browser tab.
-              </p>
-              <div className="p-2.5 rounded bg-slate-950 border border-slate-800/80 font-mono text-[11px] text-slate-400">
-                Shortcut: <code className="text-emerald-300">Alt + Shift + R</code> to launch
+                <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
+                  System Architecture &amp; Zero-Backend Engine
+                </h2>
               </div>
             </div>
 
-            <div className="p-5 rounded-xl bg-[#0f172a] border border-slate-800 space-y-3">
-              <div className="flex items-center gap-2 text-white font-mono font-bold text-xs">
-                <span className="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">
-                  2
-                </span>
-                <span>Record Interactions</span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                Enter your starting URL and click <strong className="text-emerald-400 font-mono">Record</strong>. Navigate, click, and type freely. Actions stream live into the IDE command table.
-              </p>
-              <div className="p-2.5 rounded bg-slate-950 border border-slate-800/80 font-mono text-[11px] text-emerald-400">
-                Passwords are automatically masked in memory
-              </div>
-            </div>
-
-            <div className="p-5 rounded-xl bg-[#0f172a] border border-slate-800 space-y-3">
-              <div className="flex items-center gap-2 text-white font-mono font-bold text-xs">
-                <span className="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">
-                  3
-                </span>
-                <span>Replay &amp; Export</span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                Click <strong className="text-emerald-400 font-mono">Stop</strong>. Hit <strong className="text-white font-mono">Replay Macro</strong> to test execution in your tab. When satisfied, export to Playwright, Puppeteer, Python, or .side.
-              </p>
-              <div className="p-2.5 rounded bg-slate-950 border border-slate-800/80 font-mono text-[11px] text-slate-400">
-                Speed options: 0.5x, 1x, or 2x
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION 2: 5-TIER SELECTOR WATERFALL */}
-        <section id="waterfall" className="scroll-mt-24 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
-              02
-            </div>
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
-                The 5-Tier Selector Waterfall
-              </h2>
-              <p className="text-xs text-slate-400 font-mono">
-                Why FlowMacro macros survive redesigns, dynamic classes, and Shadow DOMs.
-              </p>
-            </div>
-          </div>
-
-          <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800 space-y-6 font-mono text-xs">
-            <p className="text-slate-300 leading-relaxed font-sans">
-              Traditional recorders capture only brittle CSS selectors (like <code className="text-slate-400 bg-slate-900 px-1 py-0.5 rounded">.css-19f8x7y</code>) which break the moment a frontend app is rebuilt. FlowMacro computes five distinct locators for every target element in descending priority:
-            </p>
-
-            <div className="space-y-3 font-mono">
-              <div className="p-3.5 rounded-lg bg-[#0b0f17] border border-slate-800 flex items-start gap-3">
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[11px] font-bold shrink-0">
-                  Tier 1
-                </span>
-                <div>
-                  <h4 className="text-white font-bold">QA &amp; Test Attributes</h4>
-                  <p className="text-slate-400 text-[11px] mt-0.5">
-                    Checks for <code className="text-emerald-300">data-testid</code>, <code className="text-emerald-300">data-test</code>, <code className="text-emerald-300">data-cy</code>, and <code className="text-emerald-300">data-qa</code>. The gold standard for resilient test automation.
-                  </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 font-mono text-xs">
+              <div className="p-5 rounded-xl bg-[#0f172a] border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-white font-bold">
+                  <Terminal className="w-4 h-4 text-emerald-400" />
+                  <span>1. Dedicated IDE Controller</span>
+                </div>
+                <p className="text-slate-400 font-sans leading-relaxed">
+                  Opens as an isolated 960 &times; 750px window via <code className="text-slate-300 bg-slate-900 px-1 py-0.5 rounded">chrome.windows.create(popup)</code>. Controls target browser tabs via message passing without injecting heavy UI frames into target websites.
+                </p>
+                <div className="pt-2 text-[11px] text-slate-500 border-t border-slate-800/80">
+                  Focus: Zero DOM interference with target app
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-lg bg-[#0b0f17] border border-slate-800 flex items-start gap-3">
-                <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[11px] font-bold shrink-0">
-                  Tier 2
-                </span>
-                <div>
-                  <h4 className="text-white font-bold">Semantic ID Filter</h4>
-                  <p className="text-slate-400 text-[11px] mt-0.5">
-                    Uses unique <code className="text-blue-300">id=&quot;identifier-field&quot;</code>, while automatically discarding ephemeral autogenerated IDs (e.g. <code className="text-slate-500">:r1:</code>, <code className="text-slate-500">ember1284</code>, <code className="text-slate-500">rc-tabs-0-tab</code>).
-                  </p>
+              <div className="p-5 rounded-xl bg-[#0f172a] border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-white font-bold">
+                  <Cpu className="w-4 h-4 text-emerald-400" />
+                  <span>2. Manifest V3 Service Worker</span>
+                </div>
+                <p className="text-slate-400 font-sans leading-relaxed">
+                  Operates with dual-tier state persistence (<code className="text-slate-300 bg-slate-900 px-1 py-0.5 rounded">chrome.storage.session</code> &amp; <code className="text-slate-300 bg-slate-900 px-1 py-0.5 rounded">chrome.storage.local</code>). Survives browser service worker suspension and rehydrates execution seamlessly.
+                </p>
+                <div className="pt-2 text-[11px] text-slate-500 border-t border-slate-800/80">
+                  Lifecycle: Rehydration on every message &amp; tab update
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-lg bg-[#0b0f17] border border-slate-800 flex items-start gap-3">
-                <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[11px] font-bold shrink-0">
-                  Tier 3
-                </span>
-                <div>
-                  <h4 className="text-white font-bold">Semantic ARIA &amp; Accessible Roles</h4>
-                  <p className="text-slate-400 text-[11px] mt-0.5">
-                    Captures <code className="text-purple-300">[aria-label=&quot;Sign In&quot;]</code>, <code className="text-purple-300">[placeholder=&quot;Search...&quot;]</code>, and accessible button roles.
-                  </p>
+              <div className="p-5 rounded-xl bg-[#0f172a] border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-white font-bold">
+                  <Database className="w-4 h-4 text-emerald-400" />
+                  <span>3. 100% Client-Side Storage</span>
                 </div>
-              </div>
-
-              <div className="p-3.5 rounded-lg bg-[#0b0f17] border border-slate-800 flex items-start gap-3">
-                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[11px] font-bold shrink-0">
-                  Tier 4
-                </span>
-                <div>
-                  <h4 className="text-white font-bold">Sanitized Hierarchical CSS Path</h4>
-                  <p className="text-slate-400 text-[11px] mt-0.5">
-                    Generates clean CSS selectors while scrubbing dynamic emoji classes (e.g. <code className="text-slate-500">.🔒️</code>) and transient animation hashes.
-                  </p>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-lg bg-[#0b0f17] border border-slate-800 flex items-start gap-3">
-                <span className="px-2 py-0.5 rounded bg-slate-700 text-slate-300 text-[11px] font-bold shrink-0">
-                  Tier 5
-                </span>
-                <div>
-                  <h4 className="text-white font-bold">Robust XPath Fallback</h4>
-                  <p className="text-slate-400 text-[11px] mt-0.5">
-                    If all CSS selectors fail during dynamic DOM mutation, FlowMacro seamlessly falls back to structural XPath.
-                  </p>
+                <p className="text-slate-400 font-sans leading-relaxed">
+                  Recorded workflows, test suites, and cryptographic keys remain strictly on your local device. FlowMacro does not operate any remote database, proxy servers, or third-party telemetry beacons.
+                </p>
+                <div className="pt-2 text-[11px] text-emerald-400 border-t border-slate-800/80">
+                  Compliance: Zero cloud exposure, GDPR/HIPAA-safe
                 </div>
               </div>
             </div>
 
-            <div className="p-4 rounded-lg bg-[#0b0f17] border border-emerald-500/30 flex items-start gap-3 text-xs">
+            {/* Permission Specs Table */}
+            <div className="p-5 rounded-xl bg-[#0f172a] border border-slate-800 font-mono text-xs space-y-3">
+              <h4 className="text-white font-bold text-sm">Manifest V3 Permission Declarations:</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
+                <div className="p-2.5 rounded bg-[#0b0f17] border border-slate-800">
+                  <code className="text-emerald-400">activeTab &amp; tabs</code>: Attaches recorder/replayer content scripts into the specific tab you target.
+                </div>
+                <div className="p-2.5 rounded bg-[#0b0f17] border border-slate-800">
+                  <code className="text-emerald-400">scripting</code>: Dynamically injects <code className="text-slate-300">recorder.js</code> and <code className="text-slate-300">replayer.js</code> upon page navigation.
+                </div>
+                <div className="p-2.5 rounded bg-[#0b0f17] border border-slate-800">
+                  <code className="text-emerald-400">storage &amp; session</code>: Persists your test suites and active recording heads locally across reloads.
+                </div>
+                <div className="p-2.5 rounded bg-[#0b0f17] border border-slate-800">
+                  <code className="text-emerald-400">webNavigation</code>: Detects top-level redirects and hash transitions (<code className="text-slate-300">#/factor-one</code>) to re-attach listeners.
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* =========================================================================
+            SECTION 2: QUICK START GUIDE
+            ========================================================================= */}
+        {isVisible("quickstart", "quick start guide recording replay hotkeys controls base url") && (
+          <section id="quickstart" className="scroll-mt-24 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
+                02
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold block">
+                  Category: Getting Started
+                </span>
+                <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
+                  Quick Start: Your First Automation in 60s
+                </h2>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="p-5 rounded-xl bg-[#0f172a] border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-white font-mono font-bold text-xs">
+                  <span className="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">
+                    1
+                  </span>
+                  <span>Open Controller Window</span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed font-sans">
+                  Click the FlowMacro icon in your Chrome toolbar or hit <strong className="text-emerald-400 font-mono">Alt + Shift + R</strong>. The standalone controller window launches and establishes connection with your browser tab.
+                </p>
+                <div className="p-2.5 rounded bg-slate-950 border border-slate-800/80 font-mono text-[11px] text-slate-400">
+                  Controller size: 960 &times; 750px popup
+                </div>
+              </div>
+
+              <div className="p-5 rounded-xl bg-[#0f172a] border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-white font-mono font-bold text-xs">
+                  <span className="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">
+                    2
+                  </span>
+                  <span>Specify URL &amp; Record</span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed font-sans">
+                  Enter your target starting URL in the <strong className="text-slate-300 font-mono">BASE_URL</strong> field and click <strong className="text-rose-400 font-mono">Record</strong>. Navigate and click elements naturally. Actions stream into the table in real time.
+                </p>
+                <div className="p-2.5 rounded bg-slate-950 border border-slate-800/80 font-mono text-[11px] text-emerald-400">
+                  Passwords masked automatically in memory
+                </div>
+              </div>
+
+              <div className="p-5 rounded-xl bg-[#0f172a] border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-white font-mono font-bold text-xs">
+                  <span className="w-5 h-5 rounded bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px]">
+                    3
+                  </span>
+                  <span>Replay, Tune &amp; Export</span>
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed font-sans">
+                  Hit <strong className="text-slate-300 font-mono">Stop</strong> when finished. Click <strong className="text-emerald-400 font-mono">Replay Macro</strong> to test execution at 0.5x, 1x, or 2x speed. Export to Playwright (TS), Puppeteer (JS), or Python Selenium.
+                </p>
+                <div className="p-2.5 rounded bg-slate-950 border border-slate-800/80 font-mono text-[11px] text-slate-400">
+                  Green outline confirms target element
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 font-mono text-xs text-emerald-300 flex items-start gap-3">
               <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
-                <strong className="text-white">Shadow DOM &amp; Iframe Support:</strong> FlowMacro utilizes <code className="text-emerald-300">composedPath()</code> to pierce open Shadow DOM boundaries and accurately dispatches commands to cross-origin iframes using target <code className="text-emerald-300">frameId</code> resolution.
+                <strong className="text-white">Pro-Tip for Fast Iteration:</strong> You can click any step in the IDE table and click <strong>&quot;Play from here&quot;</strong> to resume execution from a specific step without having to replay the entire macro from the beginning.
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
-        {/* SECTION 3: ZERO-TRUST AES-256 VAULT */}
-        <section id="vault" className="scroll-mt-24 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
-              03
-            </div>
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
-                Zero-Trust Credential &amp; Secret Vault
-              </h2>
-              <p className="text-xs text-slate-400 font-mono">
-                How FlowMacro prevents passwords from ever leaking into plain-text files or Git repos.
-              </p>
-            </div>
-          </div>
-
-          <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 font-mono text-xs">
-              <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-2">
-                <div className="flex items-center gap-2 text-rose-400 font-bold">
-                  <span>Traditional Macro Recorders</span>
-                </div>
-                <p className="text-slate-400 font-sans text-xs leading-relaxed">
-                  Save your real master password as <code className="text-rose-300">&quot;SuperSecret123!&quot;</code> directly into exported JSON or test scripts. Anyone with access to the repo or log files can read it.
-                </p>
+        {/* =========================================================================
+            SECTION 3: 5-TIER SELECTOR WATERFALL & DOM ENGINE
+            ========================================================================= */}
+        {isVisible("selectors", "selectors 5-tier waterfall shadow dom iframe composedpath testid aria regex clean css xpath") && (
+          <section id="selectors" className="scroll-mt-24 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
+                03
               </div>
-
-              <div className="p-4 rounded-lg bg-[#0b0f17] border border-emerald-500/40 space-y-2">
-                <div className="flex items-center gap-2 text-emerald-400 font-bold">
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>FlowMacro Zero-Trust Vault</span>
-                </div>
-                <p className="text-slate-400 font-sans text-xs leading-relaxed">
-                  Masks the field as <code className="text-emerald-300 bg-emerald-500/10 px-1 py-0.5 rounded">&#123;&#123;SECRET_PASSWORD&#125;&#125;</code> and encrypts the value in transient RAM using <strong className="text-white">AES-256-GCM</strong>.
-                </p>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold block">
+                  Category: Core Automation Engine
+                </span>
+                <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
+                  The 5-Tier Selector Waterfall &amp; DOM Piercing
+                </h2>
               </div>
             </div>
 
-            <div className="space-y-3 font-mono text-xs">
-              <h4 className="text-white font-bold text-sm">How exported code handles your secrets:</h4>
-              <p className="text-slate-400 font-sans text-xs">
-                When you click export to Playwright, Puppeteer, or Python Selenium, FlowMacro references a secure environment variable instead of hardcoding any credentials:
+            <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800 space-y-6 font-mono text-xs">
+              <p className="text-slate-300 leading-relaxed font-sans">
+                Most web recorders fail in production because they rely on fragile CSS selectors like <code className="text-slate-400 bg-slate-900 px-1 py-0.5 rounded">div.css-19f8x &gt; button.btn-3a</code>. FlowMacro resolves this with an intelligent multi-tier locator hierarchy evaluated at capture time:
               </p>
 
-              <div className="p-4 rounded-lg bg-[#090d14] border border-slate-800 text-xs overflow-x-auto text-slate-300">
-                <pre>{`// Generated Playwright Script
-const AUTO_MACRO_PASSWORD = process.env.AUTO_MACRO_PASSWORD || '';
-
-// Step: TYPE id=password-field
-await page.locator("#password-field").fill(AUTO_MACRO_PASSWORD);`}</pre>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION 4: MULTI-STEP LOGIN & AUTH FLOWS */}
-        <section id="auth" className="scroll-mt-24 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
-              04
-            </div>
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
-                Troubleshooting Multi-Step Logins (Clerk, Supabase, NextAuth)
-              </h2>
-              <p className="text-xs text-slate-400 font-mono">
-                Surviving two-screen auth forms, hash redirects, and login reloads.
-              </p>
-            </div>
-          </div>
-
-          <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800 space-y-6 text-xs font-mono">
-            <p className="text-slate-300 leading-relaxed font-sans">
-              Modern authentication providers (such as Clerk, Supabase, Auth0, and NextAuth) frequently split login into two separate screens: <strong>Screen 1 (Username / Email)</strong> &rarr; Click Continue &rarr; <strong>Screen 2 (Password)</strong> &rarr; Click Sign In. Here is how to ensure smooth replay:
-            </p>
-
-            <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-[#0b0f17] border border-amber-500/30 space-y-2">
-                <div className="flex items-center gap-2 text-amber-400 font-bold">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>Symptom: Ghost SUBMIT steps recorded during screen transitions</span>
+              <div className="space-y-3 font-mono">
+                {/* Tier 0: Shadow DOM */}
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-cyan-500/30 flex items-start gap-3">
+                  <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[11px] font-bold shrink-0">
+                    Tier 0
+                  </span>
+                  <div>
+                    <h4 className="text-white font-bold">Open Shadow DOM Piercing (composedPath)</h4>
+                    <p className="text-slate-400 text-[11px] mt-0.5 font-sans">
+                      Uses <code className="text-cyan-300 font-mono">composedPath()</code> and recursive shadow host inspection. When an element lives inside a Web Component shadow root, FlowMacro emits deep piercing locators like <code className="text-cyan-300 font-mono">shadow=host-component &gt;&gt;&gt; inner-button</code>.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-slate-300 font-sans leading-relaxed">
-                  When you press Enter or click &quot;Continue&quot;, modern form libraries often emit both a <code className="text-slate-200">click</code> on the primary button AND a form <code className="text-slate-200">submit</code> event. During recording, this might appear as duplicate submit steps before the password screen loads.
-                </p>
-                <div className="p-3 rounded bg-slate-900 border border-slate-800 text-emerald-300">
-                  <strong className="text-white">Solution:</strong> Inspect your steps in the FlowMacro IDE table. If you notice redundant <code className="text-slate-200">SUBMIT</code> steps right after clicking Continue, simply click the <strong>Trash icon</strong> to delete them. The clean flow should look like:
-                  <div className="mt-2 text-slate-300 font-mono text-[11px] space-y-1">
-                    <div>1. TYPE: id=identifier-field (e.g. username)</div>
-                    <div>2. CLICK: button.cl-formButtonPrimary (Continue)</div>
-                    <div>3. TYPE: id=password-field (&#123;&#123;SECRET_PASSWORD&#125;&#125;)</div>
-                    <div>4. CLICK: button.cl-formButtonPrimary (Sign In)</div>
+
+                {/* Tier 1: Test IDs */}
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-emerald-500/30 flex items-start gap-3">
+                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[11px] font-bold shrink-0">
+                    Tier 1
+                  </span>
+                  <div>
+                    <h4 className="text-white font-bold">QA &amp; Test Attributes (data-testid)</h4>
+                    <p className="text-slate-400 text-[11px] mt-0.5 font-sans">
+                      Checks for <code className="text-emerald-300 font-mono">data-testid</code>, <code className="text-emerald-300 font-mono">data-test</code>, <code className="text-emerald-300 font-mono">data-cy</code>, and <code className="text-emerald-300 font-mono">data-qa</code>. Resilient against any styling or DOM tree redesign.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tier 2: Dynamic ID Filtering */}
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-blue-500/30 flex items-start gap-3">
+                  <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[11px] font-bold shrink-0">
+                    Tier 2
+                  </span>
+                  <div>
+                    <h4 className="text-white font-bold">Semantic ID Filter (Regex Discard Engine)</h4>
+                    <p className="text-slate-400 text-[11px] mt-0.5 font-sans">
+                      Employs regex filters to eliminate autogenerated framework IDs like <code className="text-slate-500 font-mono">:r0:</code> (React 18), <code className="text-slate-500 font-mono">ember1284</code>, <code className="text-slate-500 font-mono">radix-id-12</code>, and 4+ digit numeric hashes, preserving only stable IDs like <code className="text-blue-300 font-mono">#identifier-field</code>.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tier 3: ARIA & Roles */}
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-purple-500/30 flex items-start gap-3">
+                  <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-[11px] font-bold shrink-0">
+                    Tier 3
+                  </span>
+                  <div>
+                    <h4 className="text-white font-bold">Semantic ARIA &amp; Accessible Roles</h4>
+                    <p className="text-slate-400 text-[11px] mt-0.5 font-sans">
+                      Captures <code className="text-purple-300 font-mono">[aria-label=&quot;Sign In&quot;]</code>, <code className="text-purple-300 font-mono">[role=&quot;button&quot;]</code>, and input <code className="text-purple-300 font-mono">[placeholder=&quot;...&quot;]</code>.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tier 4: Semantic Element Locators */}
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-amber-500/30 flex items-start gap-3">
+                  <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[11px] font-bold shrink-0">
+                    Tier 4
+                  </span>
+                  <div>
+                    <h4 className="text-white font-bold">Semantic Element &amp; Button Text</h4>
+                    <p className="text-slate-400 text-[11px] mt-0.5 font-sans">
+                      Generates text-based locators such as <code className="text-amber-300 font-mono">xpath=//button[normalize-space()=&quot;Continue&quot;]</code> or <code className="text-amber-300 font-mono">css=button[type=&quot;submit&quot;]</code>.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tier 5: Sanitized CSS & XPath */}
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-700 flex items-start gap-3">
+                  <span className="px-2 py-0.5 rounded bg-slate-700 text-slate-300 text-[11px] font-bold shrink-0">
+                    Tier 5
+                  </span>
+                  <div>
+                    <h4 className="text-white font-bold">Sanitized CSS &amp; Structural XPath Fallback</h4>
+                    <p className="text-slate-400 text-[11px] mt-0.5 font-sans">
+                      Generates hierarchical CSS with automatic emoji stripping (removing Clerk&apos;s <code className="text-slate-400 font-mono">.🔒️</code> classes) and standard structural XPath as a final resilience layer.
+                    </p>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-2">
-                <div className="flex items-center gap-2 text-white font-bold">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>Page Redirects &amp; Hash Changes (#/factor-one)</span>
+              {/* Cross-Origin Iframe Routing Card */}
+              <div className="p-4 rounded-lg bg-[#0b0f17] border border-emerald-500/30 flex items-start gap-3 text-xs">
+                <Boxes className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-white">Cross-Origin Iframe Routing:</strong> FlowMacro tracks the exact <code className="text-emerald-300 font-mono">frameId</code> from message senders. Commands recorded inside embedded payment frames (Stripe, PayPal) dispatch directly into the matching frame during replay.
                 </div>
-                <p className="text-slate-400 font-sans leading-relaxed">
-                  When the URL updates to <code className="text-slate-200">/#/factor-one</code>, FlowMacro automatically injects both the recorder and replayer into the new state. If the password input takes a brief moment to animate into view, FlowMacro&apos;s replayer will automatically poll up to 6000ms until the element appears.
-                </p>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
-        {/* SECTION 5: "TARGET NOT FOUND IN DOM" & TIMING */}
-        <section id="errors" className="scroll-mt-24 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
-              05
+        {/* =========================================================================
+            SECTION 4: ZERO-TRUST AES-256 VAULT
+            ========================================================================= */}
+        {isVisible("security", "security vault aes-256 gcm web crypto passwords masked secret credentials") && (
+          <section id="security" className="scroll-mt-24 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
+                04
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold block">
+                  Category: Security &amp; Compliance
+                </span>
+                <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
+                  Zero-Trust Credential &amp; Secret Vault
+                </h2>
+              </div>
             </div>
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
-                Resolving &quot;Target Not Found in DOM within 6000ms&quot;
-              </h2>
-              <p className="text-xs text-slate-400 font-mono">
-                Diagnosing and fixing timeout errors during macro replay.
+
+            <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 font-mono text-xs">
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-2">
+                  <div className="flex items-center gap-2 text-rose-400 font-bold">
+                    <span>Brittle / Legacy Macro Tools</span>
+                  </div>
+                  <p className="text-slate-400 font-sans text-xs leading-relaxed">
+                    Hardcode plain-text passwords into exported JSON files or scripts. Committing these files to Git or sharing them with teammates creates instant credential leak vulnerabilities.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-emerald-500/40 space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>FlowMacro In-Memory Vault</span>
+                  </div>
+                  <p className="text-slate-400 font-sans text-xs leading-relaxed">
+                    Masks sensitive fields as <code className="text-emerald-300 bg-emerald-500/10 px-1 py-0.5 rounded font-mono">&#123;&#123;SECRET_PASSWORD&#125;&#125;</code> and encrypts secrets in memory via native <strong className="text-white">AES-256-GCM (Web Crypto API)</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Technical Implementation Breakdown */}
+              <div className="space-y-3 font-mono text-xs">
+                <h4 className="text-white font-bold text-sm">How Cryptographic Secrets Work Under the Hood:</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[11px]">
+                  <div className="p-3 rounded-lg bg-[#0b0f17] border border-slate-800">
+                    <strong className="text-slate-200 block mb-1">1. Detection</strong>
+                    <span className="text-slate-400">
+                      Detects <code className="text-slate-300">type=&quot;password&quot;</code>, <code className="text-slate-300">autocomplete=&quot;current-password&quot;</code>, and inputs with tokens like <code className="text-slate-300">secret|token|api_key</code>.
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-[#0b0f17] border border-slate-800">
+                    <strong className="text-slate-200 block mb-1">2. 96-bit Nonce GCM</strong>
+                    <span className="text-slate-400">
+                      Generates a cryptographically random 96-bit initialization vector (<code className="text-slate-300">crypto.getRandomValues</code>) with client-side 256-bit symmetric keys.
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-[#0b0f17] border border-slate-800">
+                    <strong className="text-slate-200 block mb-1">3. CI/CD Environment Export</strong>
+                    <span className="text-slate-400">
+                      Exports generate clean references to <code className="text-emerald-300">process.env.AUTO_MACRO_PASSWORD</code> so tests execute headlessly in GitHub Actions with zero leaks.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-[#090d14] border border-slate-800 text-xs overflow-x-auto text-slate-300 mt-2">
+                  <pre>{`// Secure Playwright Export - Zero Hardcoded Passwords
+const AUTO_MACRO_PASSWORD = process.env.AUTO_MACRO_PASSWORD || '';
+
+// Step: TYPE id=password-field
+await page.locator("#password-field").fill(AUTO_MACRO_PASSWORD);`}</pre>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* =========================================================================
+            SECTION 5: TROUBLESHOOTING & EDGE CASES
+            ========================================================================= */}
+        {isVisible("troubleshooting", "troubleshooting errors timeout 6000ms multi-step auth clerk supabase nextauth ghost submit wait inspector") && (
+          <section id="troubleshooting" className="scroll-mt-24 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
+                05
+              </div>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold block">
+                  Category: Problem Solving
+                </span>
+                <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
+                  Troubleshooting &amp; Real-World Edge Cases
+                </h2>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800 space-y-6 text-xs font-mono">
+              <p className="text-slate-300 leading-relaxed font-sans">
+                Real-world web applications (especially modern authentication providers like Clerk, Supabase, Auth0, and NextAuth) introduce dynamic DOM states. Here is how to diagnose and resolve each scenario:
               </p>
+
+              <div className="space-y-5">
+                {/* Issue 1: Ghost Submit Steps in Clerk / Two-Screen Login */}
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-amber-500/30 space-y-3">
+                  <div className="flex items-center gap-2 text-amber-400 font-bold">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>Edge Case 1: Two-Screen Login Forms &amp; Ghost &quot;SUBMIT&quot; Steps</span>
+                  </div>
+                  <p className="text-slate-300 font-sans leading-relaxed">
+                    Modern auth widgets split sign-in across two screens (Screen 1: enter email &rarr; click Continue &rarr; Screen 2: enter password &rarr; click Sign In). When clicking &quot;Continue&quot;, form libraries often emit both a button click and a form submit, recording redundant <code className="text-slate-200">SUBMIT</code> steps before Screen 2 appears.
+                  </p>
+                  <div className="p-3.5 rounded bg-slate-900 border border-slate-800 text-emerald-300 space-y-2">
+                    <strong className="text-white">The Clean Solution:</strong>
+                    <p className="text-slate-300 font-sans">
+                      In the FlowMacro IDE table, review your recorded steps. Simply click the <strong>Trash icon</strong> on any ghost <code className="text-slate-200">SUBMIT</code> steps between the username click and the password input. A clean multi-step flow should look like:
+                    </p>
+                    <div className="p-2.5 rounded bg-slate-950 font-mono text-[11px] text-slate-300 space-y-1">
+                      <div>1. TYPE: id=identifier-field (e.g. username/email)</div>
+                      <div>2. CLICK: button.cl-formButtonPrimary (Continue)</div>
+                      <div>3. TYPE: id=password-field (&#123;&#123;SECRET_PASSWORD&#125;&#125;)</div>
+                      <div>4. CLICK: button.cl-formButtonPrimary (Sign In)</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Issue 2: 6000ms Timeout Error */}
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-rose-500/40 space-y-3">
+                  <div className="flex items-center gap-2 text-rose-400 font-bold">
+                    <Clock className="w-4 h-4 shrink-0" />
+                    <span>Edge Case 2: &quot;Target not found in DOM within 6000ms&quot;</span>
+                  </div>
+                  <p className="text-slate-300 font-sans leading-relaxed">
+                    Occurs when an element takes longer than 6 seconds to render due to network latency, lazy chunk loading, or modal transitions.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-sans text-xs pt-1">
+                    <div className="p-3 rounded bg-slate-900 border border-slate-800 space-y-1">
+                      <strong className="text-white font-mono text-[11px]">Fix A: Switch Waterfall Selector</strong>
+                      <p className="text-slate-400 text-[11px]">
+                        Click the failed step in the table. In the Command Inspector, switch from the CSS path to an alternate <strong>ARIA locator</strong> or <strong>ID</strong>.
+                      </p>
+                    </div>
+                    <div className="p-3 rounded bg-slate-900 border border-slate-800 space-y-1">
+                      <strong className="text-white font-mono text-[11px]">Fix B: Add a Brief Pause Step</strong>
+                      <p className="text-slate-400 text-[11px]">
+                        Click <strong>+ Add Step</strong> in the IDE and choose <code className="text-emerald-300 font-mono">wait</code> (e.g. 1500ms) right before the slow element to give the SPA time to render.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Issue 3: Reordering and Modifying Steps */}
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-2">
+                  <div className="flex items-center gap-2 text-white font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Edge Case 3: Reordering or Updating Recorded Steps</span>
+                  </div>
+                  <p className="text-slate-300 font-sans leading-relaxed">
+                    Never discard an entire recording if you clicked something by accident. Use the <strong>&uarr; Up</strong> and <strong>&darr; Down</strong> arrows on any step row to reorder actions, or select a step to adjust its command type, selector, or value directly in the Command Inspector.
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
+          </section>
+        )}
 
-          <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800 space-y-5 text-xs font-mono">
-            <p className="text-slate-300 leading-relaxed font-sans">
-              If a step fails during replay, FlowMacro outputs an execution error showing all attempted locators from the 5-tier waterfall:
-            </p>
-
-            <div className="p-4 rounded-lg bg-[#090d14] border border-rose-500/40 text-rose-300 overflow-x-auto">
-              <code>Replay Error: Step 7 [CLICK: css=form &gt; button] failed: Target not found in DOM within 6000ms. Attempted locators: [&quot;css=form &gt; button&quot;, &quot;xpath=//form[1]//button[1]&quot;]</code>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-sans">
-              <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-2">
-                <h4 className="text-white font-bold font-mono text-xs flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  Fix 1: Switch Locator in Command Inspector
-                </h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  Click the failed step in the FlowMacro IDE table. In the Command Inspector, toggle from the dynamic CSS selector to an <strong>ARIA label</strong> (e.g. <code className="text-slate-200 font-mono">[aria-label=&quot;Sign In&quot;]</code>) or <strong>id</strong>.
-                </p>
+        {/* =========================================================================
+            SECTION 6: CODE EXPORTERS & CI/CD PIPELINES
+            ========================================================================= */}
+        {isVisible("exporters", "code exporters playwright puppeteer python selenium side json ci/cd github actions") && (
+          <section id="exporters" className="scroll-mt-24 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
+                06
               </div>
-
-              <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-2">
-                <h4 className="text-white font-bold font-mono text-xs flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  Fix 2: Add a Pause / Wait Step
-                </h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  If the target website has heavy lazy-loading or animated modals, click <strong>+ Add Step</strong> in the IDE and insert a brief <code>waitFor</code> or <code>pause (1500ms)</code> right before the action.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-2">
-                <h4 className="text-white font-bold font-mono text-xs flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  Fix 3: Remove Redundant / Destroyed Element
-                </h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  If the step is attempting to click a button that was unmounted immediately upon submitting the previous form, you can safely delete this redundant step.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-2">
-                <h4 className="text-white font-bold font-mono text-xs flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  Fix 4: Reorder Steps with Arrow Controls
-                </h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  Use the <strong>&uarr; Up</strong> and <strong>&darr; Down</strong> buttons on any step row to ensure prerequisite fields are filled before submitting the form.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION 6: CODE EXPORTERS & CI/CD */}
-        <section id="exporters" className="scroll-mt-24 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
-              06
-            </div>
-            <div>
-              <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
-                Code Exporters &amp; CI/CD Pipelines
-              </h2>
-              <p className="text-xs text-slate-400 font-mono">
-                Export to Playwright, Puppeteer, Python Selenium, or Selenium IDE .side.
-              </p>
-            </div>
-          </div>
-
-          <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800 space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
-              <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-1">
-                <div className="text-emerald-400 font-bold">Playwright (TS)</div>
-                <p className="text-slate-400 text-[11px] font-sans">
-                  Modern async/await TypeScript with native locator fallbacks and environment variable secrets.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-1">
-                <div className="text-emerald-400 font-bold">Puppeteer (JS)</div>
-                <p className="text-slate-400 text-[11px] font-sans">
-                  Ready-to-run Node.js scripts for lightweight web scraping and headless browser testing.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-1">
-                <div className="text-emerald-400 font-bold">Python Selenium</div>
-                <p className="text-slate-400 text-[11px] font-sans">
-                  Standard Selenium WebDriver scripts using <code className="text-slate-200">WebDriverWait</code> and Chrome Options.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-1">
-                <div className="text-emerald-400 font-bold">Selenium IDE (.side)</div>
-                <p className="text-slate-400 text-[11px] font-sans">
-                  Interchangeable JSON schema compatible with legacy test runners and IDE extensions.
-                </p>
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold block">
+                  Category: Integration &amp; CI/CD
+                </span>
+                <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
+                  Multi-Framework Code Exporters &amp; CI/CD
+                </h2>
               </div>
             </div>
 
-            <div className="space-y-3 font-mono text-xs">
-              <h4 className="text-white font-bold">Running exported Playwright tests in GitHub Actions:</h4>
-              <div className="p-4 rounded-lg bg-[#090d14] border border-slate-800 text-xs overflow-x-auto text-slate-300">
-                <pre>{`name: Playwright Tests
+            <div className="p-6 rounded-xl bg-[#0f172a] border border-slate-800 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-1">
+                  <div className="text-emerald-400 font-bold">Playwright (TS)</div>
+                  <p className="text-slate-400 text-[11px] font-sans">
+                    Async TypeScript tests with <code className="text-slate-300">page.locator()</code> and environment variables.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-1">
+                  <div className="text-emerald-400 font-bold">Puppeteer (JS)</div>
+                  <p className="text-slate-400 text-[11px] font-sans">
+                    Vanilla Node.js scripts for headless scraping and browser workflow verification.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-1">
+                  <div className="text-emerald-400 font-bold">Python Selenium</div>
+                  <p className="text-slate-400 text-[11px] font-sans">
+                    WebDriver scripts utilizing <code className="text-slate-300">WebDriverWait</code> and ChromeOptions.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-[#0b0f17] border border-slate-800 space-y-1">
+                  <div className="text-emerald-400 font-bold">Selenium IDE (.side)</div>
+                  <p className="text-slate-400 text-[11px] font-sans">
+                    Interchangeable JSON schema compatible with Selenium IDE runners.
+                  </p>
+                </div>
+              </div>
+
+              {/* GitHub Actions CI Configuration Recipe */}
+              <div className="space-y-3 font-mono text-xs">
+                <h4 className="text-white font-bold">Automated CI/CD Workflow (.github/workflows/playwright.yml):</h4>
+                <div className="p-4 rounded-lg bg-[#090d14] border border-slate-800 text-xs overflow-x-auto text-slate-300">
+                  <pre>{`name: FlowMacro Playwright CI
 on: [push, pull_request]
 
 jobs:
@@ -556,52 +701,152 @@ jobs:
       - run: npx playwright test
         env:
           AUTO_MACRO_PASSWORD: \${{ secrets.AUTO_MACRO_PASSWORD }}`}</pre>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
-        {/* SECTION 7: DIRECT SUPPORT & CONTACT */}
-        <section id="support" className="scroll-mt-24 space-y-6">
-          <div className="p-8 rounded-2xl bg-gradient-to-r from-slate-900 via-[#0e1726] to-slate-900 border border-emerald-500/30 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-                <Mail className="w-7 h-7" />
+        {/* =========================================================================
+            SECTION 7: COMMAND & KEYBOARD SHORTCUTS REFERENCE
+            ========================================================================= */}
+        {isVisible("reference", "reference commands open click type select submit waitfor wait shortcuts hotkeys ctrl+z") && (
+          <section id="reference" className="scroll-mt-24 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xs flex items-center justify-center">
+                07
               </div>
               <div>
-                <div className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 mb-2">
-                  <span>Direct Developer Support</span>
-                </div>
-                <h3 className="text-xl font-bold text-white font-mono">
-                  Need Help, Found an Edge Case, or Have Feedback?
-                </h3>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-xl font-sans">
-                  Are you encountering an unusual web application, dynamic form, or have a feature request? Reach out directly — we actively assist users and respond promptly!
-                </p>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-semibold block">
+                  Category: Developer Quick Reference
+                </span>
+                <h2 className="text-xl md:text-2xl font-bold text-white font-mono">
+                  Command &amp; Keyboard Shortcuts Reference
+                </h2>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto font-mono text-xs">
-              <a
-                href="mailto:contact@naveensingh.guru?subject=FlowMacro%20Support%20%2F%20Issue"
-                className="w-full sm:w-auto px-5 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 active:scale-95"
-              >
-                <Mail className="w-4 h-4" />
-                <span>contact@naveensingh.guru</span>
-              </a>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 font-mono text-xs">
+              {/* Commands Reference Table */}
+              <div className="p-5 rounded-xl bg-[#0f172a] border border-slate-800 space-y-4">
+                <h4 className="text-white font-bold text-sm flex items-center gap-2">
+                  <Sliders className="w-4 h-4 text-emerald-400" />
+                  <span>Supported Selenium Commands</span>
+                </h4>
+                <div className="divide-y divide-slate-800 text-[11px]">
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-blue-400 font-bold">open</span>
+                    <span className="text-slate-400">Navigates to URL &amp; waits for DOM ready</span>
+                  </div>
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-amber-400 font-bold">click</span>
+                    <span className="text-slate-400">Clicks target element (with 5-tier fallback)</span>
+                  </div>
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-purple-400 font-bold">type</span>
+                    <span className="text-slate-400">Inputs text value (auto-masked if sensitive)</span>
+                  </div>
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-teal-400 font-bold">select</span>
+                    <span className="text-slate-400">Selects dropdown option (label= or value=)</span>
+                  </div>
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-emerald-400 font-bold">submit</span>
+                    <span className="text-slate-400">Submits parent form or triggers Enter</span>
+                  </div>
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-cyan-400 font-bold">waitFor</span>
+                    <span className="text-slate-400">Polls until target element becomes visible</span>
+                  </div>
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-zinc-400 font-bold">wait</span>
+                    <span className="text-slate-400">Fixed duration delay (e.g. 1500ms)</span>
+                  </div>
+                </div>
+              </div>
 
-              <a
-                href="https://github.com/Naveen071110/flowmacro/issues"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto px-4 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium transition-all border border-slate-700 flex items-center justify-center gap-2 active:scale-95"
-              >
-                <Github className="w-4 h-4" />
-                <span>Open GitHub Issue</span>
-              </a>
+              {/* Keyboard Shortcuts Table */}
+              <div className="p-5 rounded-xl bg-[#0f172a] border border-slate-800 space-y-4">
+                <h4 className="text-white font-bold text-sm flex items-center gap-2">
+                  <Key className="w-4 h-4 text-emerald-400" />
+                  <span>IDE Keyboard Shortcuts</span>
+                </h4>
+                <div className="divide-y divide-slate-800 text-[11px]">
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-slate-200">Undo Action</span>
+                    <kbd className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-emerald-400">Ctrl + Z</kbd>
+                  </div>
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-slate-200">Redo Action</span>
+                    <kbd className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-emerald-400">Ctrl + Y / Ctrl + Shift + Z</kbd>
+                  </div>
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-slate-200">New Test Suite</span>
+                    <kbd className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-emerald-400">Ctrl + N</kbd>
+                  </div>
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-slate-200">Open / Import JSON Suite</span>
+                    <kbd className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-emerald-400">Ctrl + O</kbd>
+                  </div>
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-slate-200">Open Code Export Modal</span>
+                    <kbd className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-emerald-400">Ctrl + E</kbd>
+                  </div>
+                  <div className="py-2 flex items-center justify-between">
+                    <span className="text-slate-200">Launch Controller IDE</span>
+                    <kbd className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-emerald-400">Alt + Shift + R</kbd>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
+
+        {/* =========================================================================
+            SECTION 8: DIRECT DEVELOPER SUPPORT & ISSUES
+            ========================================================================= */}
+        {isVisible("support", "support help contact email naveen issue bug feedback report") && (
+          <section id="support" className="scroll-mt-24 space-y-6">
+            <div className="p-8 rounded-2xl bg-gradient-to-r from-slate-900 via-[#0e1726] to-slate-900 border border-emerald-500/30 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Mail className="w-7 h-7" />
+                </div>
+                <div>
+                  <div className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 mb-2">
+                    <span>Direct Developer Assistance</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white font-mono">
+                    Need Help or Found an Edge-Case Website?
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-xl font-sans">
+                    Have an unusual form, shadow DOM obstacle, or feature request? We actively monitor support inquiries and provide hands-on assistance.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto font-mono text-xs">
+                <a
+                  href="mailto:contact@naveensingh.guru?subject=FlowMacro%20Support%20%2F%20Issue"
+                  className="w-full sm:w-auto px-5 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>contact@naveensingh.guru</span>
+                </a>
+
+                <a
+                  href="https://github.com/Naveen071110/flowmacro/issues"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto px-4 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium transition-all border border-slate-700 flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <Github className="w-4 h-4" />
+                  <span>GitHub Issues</span>
+                </a>
+              </div>
+            </div>
+          </section>
+        )}
 
       </main>
 
@@ -620,13 +865,19 @@ jobs:
             <span>• Zero-Backend Automation Engine</span>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-6">
             <Link href="/" className="hover:text-emerald-400 transition-colors">
               Home
             </Link>
             <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
               Privacy Policy
             </Link>
+            <a
+              href="mailto:contact@naveensingh.guru"
+              className="hover:text-emerald-400 transition-colors"
+            >
+              contact@naveensingh.guru
+            </a>
             <a
               href="https://github.com/Naveen071110/flowmacro"
               target="_blank"
@@ -635,12 +886,7 @@ jobs:
             >
               GitHub
             </a>
-            <a
-              href="mailto:contact@naveensingh.guru"
-              className="hover:text-emerald-400 transition-colors"
-            >
-              contact@naveensingh.guru
-            </a>
+            <span>Built by Naveen Guru</span>
           </div>
         </div>
       </footer>
