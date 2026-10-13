@@ -19,3 +19,8 @@ out/
 Thumbs.db
 test-results/
 playwright-report/
+
+# Scratch & Local Assets
+store_assets/
+agent_output.txt
+*.log
