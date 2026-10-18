@@ -21,6 +21,7 @@ import {
   ExternalLink,
   Code2,
   FolderOpen,
+  FileCode,
   Undo,
   Redo,
   HelpCircle,
@@ -176,6 +177,13 @@ export default function App() {
       console.debug('[FlowMacro] Error reading manifest version:', e);
     }
   }, []);
+
+  // Sync window title with active macro suite name
+  useEffect(() => {
+    document.title = suite.name
+      ? `${suite.name} — FlowMacro IDE`
+      : 'FlowMacro IDE';
+  }, [suite.name]);
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -1046,20 +1054,10 @@ export default function App() {
 
       {/* TOP APPLICATION BAR */}
       <header className="flex items-center justify-between px-4 py-2.5 bg-zinc-950 border-b border-zinc-800/80 shrink-0">
-        {/* Left: Brand & Suite Title */}
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900 flex items-center justify-center shadow-sm shrink-0">
-            <img
-              src="/automacro_ide_symbol.png"
-              alt="FlowMacro IDE Logo"
-              className="w-full h-full object-cover"
-            />
-          </div>
-
-          <div className="h-4 w-px bg-zinc-800" />
-
-          {/* Inline Editable Suite Name */}
-          <div className="flex items-center gap-1.5">
+        {/* Left: Active Macro Suite Identifier & Inline Editor */}
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-zinc-900/90 border border-zinc-800 shadow-sm">
+            <FileCode className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
             {editingTitle ? (
               <input
                 type="text"
@@ -1068,17 +1066,24 @@ export default function App() {
                 onBlur={() => setEditingTitle(false)}
                 onKeyDown={(e) => e.key === 'Enter' && setEditingTitle(false)}
                 onChange={(e) => updateSuite((s) => ({ ...s, name: e.target.value }))}
-                className="text-xs font-medium bg-zinc-900 border border-emerald-500/50 rounded px-2 py-1 text-zinc-100 outline-none focus:ring-1 focus:ring-emerald-500"
+                className="text-xs font-medium bg-zinc-950 border border-emerald-500/60 rounded px-1.5 py-0.5 text-zinc-100 outline-none focus:ring-1 focus:ring-emerald-500"
               />
             ) : (
-              <span
+              <button
+                type="button"
                 onClick={() => setEditingTitle(true)}
-                title="Click to edit suite name"
-                className="text-xs font-medium text-zinc-300 hover:text-zinc-100 cursor-pointer px-1.5 py-0.5 rounded hover:bg-zinc-800/60 transition-colors"
+                title="Click to rename macro"
+                className="flex items-center gap-1.5 text-xs font-medium text-zinc-200 hover:text-white transition-colors group"
               >
-                {suite.name}
-              </span>
+                <span>{suite.name}</span>
+                <span className="text-[10px] text-zinc-500 group-hover:text-zinc-400 transition-colors">
+                  ✎
+                </span>
+              </button>
             )}
+            <span className="text-[10px] text-zinc-500 font-mono pl-1.5 border-l border-zinc-800">
+              {suite.commands.length} {suite.commands.length === 1 ? 'step' : 'steps'}
+            </span>
           </div>
         </div>
 
