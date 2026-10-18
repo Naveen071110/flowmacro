@@ -150,6 +150,36 @@ async function rehydrateSessionState(): Promise<void> {
 const rehydrationPromise = rehydrateSessionState();
 
 // ============================================================================
+// LIFECYCLE HOOKS: UNINSTALL SURVEY & ONBOARDING QUICKSTART
+// ============================================================================
+const UNINSTALL_SURVEY_URL = 'https://flowmacro.vercel.app/uninstall-feedback';
+const ONBOARDING_DOCS_URL = 'https://flowmacro.vercel.app/docs#quickstart';
+
+try {
+  if (chrome.runtime?.setUninstallURL) {
+    chrome.runtime.setUninstallURL(UNINSTALL_SURVEY_URL);
+  }
+} catch (uninstallErr) {
+  console.debug('[FlowMacro] Notice: Could not initialize uninstall URL:', uninstallErr);
+}
+
+if (chrome.runtime?.onInstalled) {
+  chrome.runtime.onInstalled.addListener((details) => {
+    try {
+      if (chrome.runtime?.setUninstallURL) {
+        chrome.runtime.setUninstallURL(UNINSTALL_SURVEY_URL);
+      }
+    } catch (e) {}
+
+    if (details.reason === 'install') {
+      chrome.tabs.create({ url: ONBOARDING_DOCS_URL }).catch((err) => {
+        console.debug('[FlowMacro] Notice: Could not open onboarding tab:', err);
+      });
+    }
+  });
+}
+
+// ============================================================================
 // EXTENSION ACTION -> LAUNCH STANDALONE IDE WINDOW (960x750)
 // ============================================================================
 chrome.action.onClicked.addListener(async () => {

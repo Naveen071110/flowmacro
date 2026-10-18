@@ -37,14 +37,14 @@ async function runTestSuite() {
   // ----------------------------------------------------------------------------
   console.log('--- Group 1: Versioning & Manifest Consistency ---');
 
-  test('manifest.json, public/manifest.json, and package.json versions match (1.0.2)', () => {
+  test('manifest.json, public/manifest.json, and package.json versions match (1.0.3)', () => {
     const rootManifest = JSON.parse(fs.readFileSync('manifest.json', 'utf-8'));
     const publicManifest = JSON.parse(fs.readFileSync('public/manifest.json', 'utf-8'));
     const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
 
     assert.strictEqual(rootManifest.version, publicManifest.version, 'Manifest versions must match');
     assert.strictEqual(rootManifest.version, pkg.version, 'Manifest version must match package.json');
-    assert.strictEqual(rootManifest.version, '1.0.2', 'Expected version 1.0.2');
+    assert.strictEqual(rootManifest.version, '1.0.3', 'Expected version 1.0.3');
   });
 
   test('Manifest V3 required permissions are present', () => {
@@ -102,6 +102,10 @@ async function runTestSuite() {
     assert(appCode.includes('Documentation'), 'Help -> Documentation action present');
     assert(appCode.includes('Check Version...'), 'Help -> Check Version action present');
     assert(appCode.includes('Report Issue...'), 'Help -> Report Issue action present');
+    assert(appCode.includes('Send Feedback & Ideas...'), 'Help -> Send Feedback action present');
+    assert(appCode.includes('Report Broken Step'), 'Report Broken Step action present');
+    assert(appCode.includes('handleSendEmailFeedback'), 'Email feedback handler present');
+    assert(appCode.includes('handleCopyDiagnostics'), 'Diagnostics copy handler present');
   });
 
   // ----------------------------------------------------------------------------
@@ -434,6 +438,14 @@ async function runTestSuite() {
     assert(swCode.includes('startReplayKeepAlive'), 'service_worker.ts implements startReplayKeepAlive');
     assert(swCode.includes('stopReplayKeepAlive'), 'service_worker.ts implements stopReplayKeepAlive');
     assert(swCode.includes('replayingStepIndex: i'), 'service_worker.ts refreshes session storage on every step');
+  });
+
+  test('Fix 5: User feedback loops, uninstall survey, and onboarding hooks', () => {
+    const swCode = fs.readFileSync('src/background/service_worker.ts', 'utf-8');
+    assert(swCode.includes('setUninstallURL'), 'service_worker.ts sets uninstall URL');
+    assert(swCode.includes('UNINSTALL_SURVEY_URL'), 'service_worker.ts declares UNINSTALL_SURVEY_URL');
+    assert(swCode.includes('ONBOARDING_DOCS_URL'), 'service_worker.ts declares ONBOARDING_DOCS_URL');
+    assert(swCode.includes('onInstalled'), 'service_worker.ts listens to onInstalled');
   });
 
   await server.close();

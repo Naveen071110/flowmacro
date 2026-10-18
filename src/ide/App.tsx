@@ -28,6 +28,11 @@ import {
   X,
   Key,
   Monitor,
+  MessageSquare,
+  LifeBuoy,
+  Mail,
+  BookOpen,
+  Copy,
 } from 'lucide-react';
 import {
   SeleniumCommand,
@@ -92,6 +97,67 @@ export default function App() {
 
   // Version string (dynamically loaded from manifest.json)
   const [appVersion, setAppVersion] = useState<string>('v1.0.2');
+
+  // Feedback & Broken Step Reporting State
+  const [showFeedbackModal, setShowFeedbackModal] = useState<boolean>(false);
+  const [brokenStepReport, setBrokenStepReport] = useState<SeleniumCommand | null>(null);
+  const [feedbackType, setFeedbackType] = useState<'general' | 'broken_step' | 'feature' | 'bug'>('general');
+  const [feedbackText, setFeedbackText] = useState<string>('');
+  const [feedbackCopied, setFeedbackCopied] = useState<boolean>(false);
+
+  const handleReportBrokenStep = (cmd: SeleniumCommand) => {
+    setBrokenStepReport(cmd);
+    setFeedbackType('broken_step');
+    setShowFeedbackModal(true);
+  };
+
+  const handleSendEmailFeedback = () => {
+    let subject = `FlowMacro ${appVersion} Feedback`;
+    let body = `Hi Naveen,\n\n`;
+
+    if (feedbackType === 'broken_step' && brokenStepReport) {
+      subject = `FlowMacro ${appVersion} - Step Failure Report: ${brokenStepReport.command}`;
+      body += `A step failed during macro replay in FlowMacro:\n\n` +
+        `• Command: ${brokenStepReport.command}\n` +
+        `• Target: ${brokenStepReport.target}\n` +
+        `• Fallback Targets: ${brokenStepReport.targets ? brokenStepReport.targets.map((t) => t[0]).join(', ') : 'None'}\n` +
+        `• Error Message: ${brokenStepReport.errorMessage || 'Element locator timed out'}\n` +
+        `• Target Page: ${suite.baseUrl || 'Unknown'}\n` +
+        `• Sensitive Field: ${brokenStepReport.isSensitive ? 'Yes (masked with AES-256)' : 'No'}\n\n` +
+        `What happened on this website:\n${feedbackText || '[Describe what broke or what the site was doing, e.g. modal popup, iframe, etc.]'}\n\n`;
+    } else if (feedbackType === 'bug') {
+      subject = `FlowMacro ${appVersion} Bug Report`;
+      body += `Bug Description:\n${feedbackText || '[Describe what went wrong]'}\n\n`;
+    } else if (feedbackType === 'feature') {
+      subject = `FlowMacro ${appVersion} Feature Request`;
+      body += `Feature Request / Idea:\n${feedbackText || '[Describe what capability or exporter you need]'}\n\n`;
+    } else {
+      body += `Feedback / Experience:\n${feedbackText || '[Your message here]'}\n\n`;
+    }
+
+    body += `\n---\nVersion: ${appVersion}\nBrowser: ${navigator.userAgent}\n`;
+    window.open(`mailto:contact@naveensingh.guru?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  };
+
+  const handleCopyDiagnostics = () => {
+    const diagnostics = {
+      version: appVersion,
+      userAgent: navigator.userAgent,
+      url: suite.baseUrl,
+      commandsCount: suite.commands.length,
+      brokenStep: brokenStepReport ? {
+        command: brokenStepReport.command,
+        target: brokenStepReport.target,
+        targets: brokenStepReport.targets,
+        errorMessage: brokenStepReport.errorMessage,
+        isSensitive: brokenStepReport.isSensitive,
+      } : null,
+      notes: feedbackText,
+    };
+    navigator.clipboard.writeText(JSON.stringify(diagnostics, null, 2));
+    setFeedbackCopied(true);
+    setTimeout(() => setFeedbackCopied(false), 2500);
+  };
 
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -899,20 +965,33 @@ export default function App() {
               Help
             </button>
             {activeMenu === 'help' && (
-              <div className="absolute left-0 top-full mt-1 w-56 rounded-lg bg-[#111114] border border-[#27272a] shadow-2xl py-1.5 z-50 text-xs">
+              <div className="absolute left-0 top-full mt-1 w-60 rounded-lg bg-[#111114] border border-[#27272a] shadow-2xl py-1.5 z-50 text-xs">
                 <a
-                  href="https://chromewebstore.google.com/detail/flowmacro-%E2%80%94-web-automatio/agehjimobcongfgkagfjhmlibkkmjppc"
+                  href="https://flowmacro.vercel.app/docs"
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => setActiveMenu(null)}
                   className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-zinc-800/80 text-left text-zinc-200 transition-colors"
                 >
                   <span className="flex items-center gap-2">
-                    <HelpCircle className="w-3.5 h-3.5 text-blue-400" />
-                    Documentation
+                    <BookOpen className="w-3.5 h-3.5 text-blue-400" />
+                    Documentation & Guides
                   </span>
                   <ExternalLink className="w-3 h-3 text-zinc-500" />
                 </a>
+                <button
+                  onClick={() => {
+                    setActiveMenu(null);
+                    setFeedbackType('general');
+                    setShowFeedbackModal(true);
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-zinc-800/80 text-left text-zinc-200 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                    💬 Send Feedback & Ideas...
+                  </span>
+                </button>
                 <button
                   onClick={() => {
                     setActiveMenu(null);
@@ -921,7 +1000,7 @@ export default function App() {
                   className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-zinc-800/80 text-left text-zinc-200 transition-colors"
                 >
                   <span className="flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400" />
                     Check Version...
                   </span>
                 </button>
@@ -944,9 +1023,21 @@ export default function App() {
           </div>
         </div>
 
-        {/* Dynamic Version indicator on Menu Bar (Issue 2) */}
-        <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-mono">
-          <span className="text-zinc-500">Engine: Chromium MV3</span>
+        {/* Dynamic Version indicator & Quick Feedback Pill on Menu Bar */}
+        <div className="flex items-center gap-2.5 text-[11px] text-zinc-400 font-mono">
+          <button
+            onClick={() => {
+              setFeedbackType('general');
+              setShowFeedbackModal(true);
+            }}
+            className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 transition-colors text-[11px]"
+            title="Share feedback or ask a question directly with developer"
+          >
+            <MessageSquare className="w-3 h-3 text-emerald-400" />
+            <span>💬 Feedback</span>
+          </button>
+          <span className="text-zinc-600">|</span>
+          <span className="text-zinc-500">Engine: MV3</span>
           <span className="app-version px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300">
             {appVersion}
           </span>
@@ -1471,6 +1562,25 @@ export default function App() {
                 </button>
               </div>
             </div>
+
+            {/* Broken Step Diagnostic Alert */}
+            {selectedCommand.status === 'failed' && (
+              <div className="mt-2.5 p-2.5 rounded-lg bg-rose-950/40 border border-rose-500/30 flex items-center justify-between text-xs animate-in fade-in">
+                <div className="flex items-center gap-2 text-rose-300 min-w-0 pr-3">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span className="truncate">
+                    <strong>Step Failed:</strong> {selectedCommand.errorMessage || 'Selector timed out or element unclickable'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleReportBrokenStep(selectedCommand)}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/40 text-[11px] font-medium transition-colors shrink-0"
+                >
+                  <LifeBuoy className="w-3.5 h-3.5 text-rose-300" />
+                  <span>Report Broken Step</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1487,6 +1597,19 @@ export default function App() {
             <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400">
               {replayState.logs.length} events
             </span>
+            {failedCount > 0 && (
+              <button
+                onClick={() => {
+                  const failedCmd = suite.commands.find((c) => c.status === 'failed');
+                  if (failedCmd) handleReportBrokenStep(failedCmd);
+                }}
+                className="flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-[10px] font-mono transition-colors ml-1"
+                title="Send failure diagnostics to developer"
+              >
+                <LifeBuoy className="w-3 h-3 text-rose-400" />
+                <span>Report Broken Step ({failedCount})</span>
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -1564,9 +1687,201 @@ export default function App() {
         </div>
       </div>
 
+      {/* PERSISTENT STATUS BAR FOOTER */}
+      <footer className="h-6 bg-zinc-950 border-t border-zinc-900 px-3 flex items-center justify-between text-[11px] text-zinc-500 font-mono shrink-0 select-none">
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5">
+            <span
+              className={`w-2 h-2 rounded-full ${
+                replayState.status === 'recording'
+                  ? 'bg-rose-500 animate-ping'
+                  : replayState.status === 'replaying'
+                  ? 'bg-emerald-500 animate-pulse'
+                  : replayState.status === 'error'
+                  ? 'bg-rose-500'
+                  : 'bg-zinc-600'
+              }`}
+            />
+            <span className="capitalize text-zinc-400">
+              {replayState.status === 'recording'
+                ? 'Recording live DOM...'
+                : replayState.status === 'replaying'
+                ? `Step ${replayState.currentStepIndex + 1}/${replayState.totalSteps}`
+                : replayState.status === 'error'
+                ? 'Execution Error'
+                : 'Ready'}
+            </span>
+          </span>
+          <span className="text-zinc-700">|</span>
+          <span className="text-zinc-400">Commands: {suite.commands.length}</span>
+          {failedCount > 0 && (
+            <>
+              <span className="text-zinc-700">|</span>
+              <span className="text-rose-400 font-medium">{failedCount} Failed</span>
+            </>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <a
+            href="https://flowmacro.vercel.app/docs"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-zinc-300 transition-colors flex items-center gap-1"
+          >
+            <BookOpen className="w-3 h-3 text-zinc-500" />
+            <span>Docs</span>
+          </a>
+          <span className="text-zinc-700">|</span>
+          <button
+            onClick={() => {
+              setFeedbackType('general');
+              setShowFeedbackModal(true);
+            }}
+            className="hover:text-emerald-400 text-zinc-400 transition-colors flex items-center gap-1"
+          >
+            <MessageSquare className="w-3 h-3 text-emerald-400" />
+            <span>💬 Feedback & Help</span>
+          </button>
+        </div>
+      </footer>
+
       {/* EXPORT MODAL */}
       {showExportModal && (
         <ExportModal suite={suite} onClose={() => setShowExportModal(false)} />
+      )}
+
+      {/* FEEDBACK & DIRECT SUPPORT MODAL */}
+      {showFeedbackModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="w-full max-w-lg bg-[#111114] border border-[#27272a] rounded-xl shadow-2xl p-5 text-zinc-100 flex flex-col gap-4">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#27272a] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm">FlowMacro Community & Direct Support</h3>
+                  <p className="text-[11px] text-zinc-400">Direct feedback channel to Naveen Guru (Creator & Maintainer)</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowFeedbackModal(false);
+                  setBrokenStepReport(null);
+                }}
+                className="text-zinc-400 hover:text-zinc-200 p-1 rounded hover:bg-zinc-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Founder Note */}
+            <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg text-xs leading-relaxed text-zinc-300">
+              <span className="font-medium text-emerald-300">👋 Personal Note:</span> I actively develop FlowMacro to be the fastest, privacy-first Selenium IDE alternative. If an automation broke on a complex website, or you have a feature idea, let me know directly!
+            </div>
+
+            {/* Category Selector */}
+            <div>
+              <label className="block text-[11px] font-mono text-zinc-400 mb-1.5 uppercase tracking-wider">
+                Feedback Type
+              </label>
+              <div className="grid grid-cols-4 gap-1.5 text-xs font-medium">
+                {(['general', 'broken_step', 'feature', 'bug'] as const).map((type) => {
+                  const labels = {
+                    general: 'Feedback',
+                    broken_step: 'Broken Step',
+                    feature: 'Feature Idea',
+                    bug: 'Bug Report',
+                  };
+                  return (
+                    <button
+                      key={type}
+                      onClick={() => setFeedbackType(type)}
+                      className={`px-2 py-1.5 rounded-lg border text-center transition-colors text-[11px] ${
+                        feedbackType === type
+                          ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                          : 'bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800'
+                      }`}
+                    >
+                      {labels[type]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Broken Step Diagnostic Summary */}
+            {feedbackType === 'broken_step' && brokenStepReport && (
+              <div className="p-2.5 rounded-lg bg-rose-950/30 border border-rose-500/30 text-xs space-y-1 font-mono">
+                <div className="text-rose-300 font-semibold flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Failed Step: {brokenStepReport.command}</span>
+                </div>
+                <div className="text-zinc-400 truncate">Target: {brokenStepReport.target}</div>
+                <div className="text-rose-400/90 text-[11px]">
+                  Error: {brokenStepReport.errorMessage || 'Locator timed out on target page'}
+                </div>
+              </div>
+            )}
+
+            {/* User message input */}
+            <div>
+              <label className="block text-[11px] font-mono text-zinc-400 mb-1.5 uppercase tracking-wider">
+                {feedbackType === 'broken_step'
+                  ? 'Website & Workflow Details'
+                  : feedbackType === 'feature'
+                  ? 'What capability would you like to see?'
+                  : 'Your Message'}
+              </label>
+              <textarea
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                placeholder={
+                  feedbackType === 'broken_step'
+                    ? 'What website or action broke? (e.g. login modal, dynamic React table, iframe, etc.)'
+                    : feedbackType === 'feature'
+                    ? 'e.g. Cypress exporter, cloud scheduled triggers, CSV variables...'
+                    : 'Tell us how FlowMacro is working for your workflows...'
+                }
+                rows={3}
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 resize-none"
+              />
+            </div>
+
+            {/* Quick Actions Footer */}
+            <div className="flex items-center justify-between pt-2 border-t border-[#27272a] text-xs">
+              <button
+                onClick={handleCopyDiagnostics}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition-colors"
+                title="Copies clean debug JSON without any sensitive secrets"
+              >
+                <Copy className="w-3.5 h-3.5 text-zinc-400" />
+                <span>{feedbackCopied ? 'Copied to Clipboard!' : 'Copy Diagnostics'}</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://github.com/Naveen071110/flowmacro/issues"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-2.5 py-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 transition-colors flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  <span>GitHub</span>
+                </a>
+                <button
+                  onClick={handleSendEmailFeedback}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-md transition-colors"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Send Email to Naveen</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* LICENSE & ACTIVATION MODAL (TOOLS MENU) */}
