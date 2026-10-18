@@ -1048,25 +1048,12 @@ export default function App() {
       <header className="flex items-center justify-between px-4 py-2.5 bg-zinc-950 border-b border-zinc-800/80 shrink-0">
         {/* Left: Brand & Suite Title */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900 flex items-center justify-center shadow-sm shrink-0">
-              <img
-                src="/automacro_ide_symbol.png"
-                alt="FlowMacro IDE Logo"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold tracking-wider text-zinc-100 uppercase font-mono">
-                  FlowMacro <span className="text-emerald-400">IDE</span>
-                </span>
-                {/* Dynamic version string (Issue 2) */}
-                <span className="app-version text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700/50">
-                  {appVersion}
-                </span>
-              </div>
-            </div>
+          <div className="w-7 h-7 rounded-lg overflow-hidden border border-emerald-500/30 bg-slate-900 flex items-center justify-center shadow-sm shrink-0">
+            <img
+              src="/automacro_ide_symbol.png"
+              alt="FlowMacro IDE Logo"
+              className="w-full h-full object-cover"
+            />
           </div>
 
           <div className="h-4 w-px bg-zinc-800" />
