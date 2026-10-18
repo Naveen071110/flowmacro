@@ -121,7 +121,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ macro, onClose }) => {
                 : 'text-zinc-400 hover:text-zinc-300'
             }`}
           >
-            AutoMacro JSON
+            FlowMacro JSON
           </button>
         </div>
 

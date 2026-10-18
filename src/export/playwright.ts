@@ -103,7 +103,7 @@ export function exportToPlaywright(input: TestSuite | Macro): string {
   return `import { test, expect } from '@playwright/test';
 
 /**
- * AutoMacro Generated Playwright Test
+ * FlowMacro Generated Playwright Test
  * Suite: ${suite.name || 'Test Suite'}
  * Base URL: ${suite.baseUrl || 'https://example.com'}
  * Generated: ${new Date().toISOString()}

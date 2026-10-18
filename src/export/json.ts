@@ -46,7 +46,7 @@ export function exportToJson(input: TestSuite | Macro): string {
 export function importFromJson(jsonString: string): any {
   const parsed = JSON.parse(jsonString);
   if (!parsed.id && !parsed.macroId) {
-    throw new Error('Invalid AutoMacro format: Missing identifier.');
+    throw new Error('Invalid FlowMacro format: Missing identifier.');
   }
   return parsed;
 }

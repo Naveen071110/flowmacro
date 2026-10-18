@@ -64,7 +64,7 @@ export function exportToSeleniumSide(input: TestSuite | Macro): string {
   const sideProject = {
     id: 'project_' + Date.now(),
     version: '2.0',
-    name: suite.name || 'AutoMacro Project',
+    name: suite.name || 'FlowMacro Project',
     url: suite.baseUrl || 'https://example.com',
     tests: [
       {

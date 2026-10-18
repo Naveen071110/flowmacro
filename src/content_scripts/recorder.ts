@@ -142,7 +142,7 @@ import { encryptSecret } from '../shared/crypto';
             list.push([`id=${element.id}`, 'id']);
           }
         } catch (err) {
-          console.debug('[AutoMacro Recorder] Failed to query ID selector:', err);
+          console.debug('[FlowMacro Recorder] Failed to query ID selector:', err);
         }
       }
     }
@@ -157,7 +157,7 @@ import { encryptSecret } from '../shared/crypto';
           list.push([`css=[aria-label="${ariaLabel}"]`, 'aria-label']);
         }
       } catch (err) {
-        console.debug('[AutoMacro Recorder] Failed to query aria-label selector:', err);
+        console.debug('[FlowMacro Recorder] Failed to query aria-label selector:', err);
       }
     }
     const role = element.getAttribute('role');
@@ -171,7 +171,7 @@ import { encryptSecret } from '../shared/crypto';
           list.push([`css=[role="${role}"][aria-label="${ariaLabel}"]`, 'role']);
         }
       } catch (err) {
-        console.debug('[AutoMacro Recorder] Failed to query role selector:', err);
+        console.debug('[FlowMacro Recorder] Failed to query role selector:', err);
       }
     }
 
@@ -260,7 +260,7 @@ import { encryptSecret } from '../shared/crypto';
           return idPath;
         }
       } catch (err) {
-        console.debug('[AutoMacro Recorder] CSS path ID query notice:', err);
+        console.debug('[FlowMacro Recorder] CSS path ID query notice:', err);
       }
     }
 

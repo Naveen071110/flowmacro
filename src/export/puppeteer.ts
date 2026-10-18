@@ -100,7 +100,7 @@ export function exportToPuppeteer(input: TestSuite | Macro): string {
   return `const puppeteer = require('puppeteer');
 
 /**
- * AutoMacro Generated Puppeteer Script
+ * FlowMacro Generated Puppeteer Script
  * Suite: ${suite.name || 'Test Suite'}
  * Base URL: ${suite.baseUrl || 'https://example.com'}
  * Generated: ${new Date().toISOString()}
@@ -112,7 +112,7 @@ export function exportToPuppeteer(input: TestSuite | Macro): string {
 
 ${envHeader}${stepLines}
 
-  console.log('✅ AutoMacro execution completed!');
+  console.log('✅ FlowMacro execution completed!');
   await browser.close();
 })();
 `;

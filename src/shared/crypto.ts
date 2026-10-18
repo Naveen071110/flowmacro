@@ -1,5 +1,5 @@
 /**
- * AutoMacro Zero-Trust Cryptographic Engine
+ * FlowMacro Zero-Trust Cryptographic Engine
  * AES-256-GCM client-side encryption using native Web Crypto API (crypto.subtle).
  */
 
@@ -27,7 +27,7 @@ export async function getOrCreateVaultKey(): Promise<CryptoKey> {
       }
     }
   } catch (e) {
-    console.warn('AutoMacro Crypto: storage access notice, generating session key:', e);
+    console.warn('FlowMacro Crypto: storage access notice, generating session key:', e);
   }
 
   // Generate a cryptographically secure 256-bit AES-GCM key
@@ -43,7 +43,7 @@ export async function getOrCreateVaultKey(): Promise<CryptoKey> {
       await chrome.storage.local.set({ [VAULT_KEY_STORAGE_KEY]: jwk });
     }
   } catch (e) {
-    console.warn('AutoMacro Crypto: key export notice:', e);
+    console.warn('FlowMacro Crypto: key export notice:', e);
   }
 
   return cachedKey;

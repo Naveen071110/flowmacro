@@ -260,7 +260,7 @@ WebDriverWait(driver, 10).until(
                   FlowMacro <span className="text-emerald-400">IDE</span>
                 </span>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800">
-                  v1.0.2
+                  v1.0.3
                 </span>
               </div>
             </Link>

@@ -11,7 +11,7 @@ import { decryptSecret } from '../shared/crypto';
         .then((result) => sendResponse(result))
         .catch((err) => {
           const errMsg = err.message || String(err);
-          console.error(`[AutoMacro Replayer] Command execution failed:`, errMsg);
+          console.error(`[FlowMacro Replayer] Command execution failed:`, errMsg);
           sendResponse({
             success: false,
             commandId: msg.command.id,
@@ -78,7 +78,7 @@ import { decryptSecret } from '../shared/crypto';
         }
       }
     } catch (err) {
-      console.debug('[AutoMacro Replayer] Shadow pierce resolution notice:', err);
+      console.debug('[FlowMacro Replayer] Shadow pierce resolution notice:', err);
     }
     return null;
   }
@@ -96,7 +96,7 @@ import { decryptSecret } from '../shared/crypto';
         }
       }
     } catch (deepErr) {
-      console.debug('[AutoMacro Replayer] Deep shadow search notice:', deepErr);
+      console.debug('[FlowMacro Replayer] Deep shadow search notice:', deepErr);
     }
 
     return null;
@@ -129,11 +129,11 @@ import { decryptSecret } from '../shared/crypto';
           }
         } catch (iframeErr) {
           // Cross-origin iframe boundary; safely ignore
-          console.debug('[AutoMacro Replayer] Cross-origin iframe boundary notice:', iframeErr);
+          console.debug('[FlowMacro Replayer] Cross-origin iframe boundary notice:', iframeErr);
         }
       }
     } catch (frameSearchErr) {
-      console.warn('[AutoMacro Replayer] Error searching same-origin iframes:', frameSearchErr);
+      console.warn('[FlowMacro Replayer] Error searching same-origin iframes:', frameSearchErr);
     }
 
     return null;
@@ -195,7 +195,7 @@ import { decryptSecret } from '../shared/crypto';
             const res = (doc as Document).evaluate(xpathVal, doc as Document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
             if (res.singleNodeValue) return res.singleNodeValue as Element;
           } catch (xpathErr) {
-            console.debug('[AutoMacro Replayer] XPath evaluation error:', xpathErr);
+            console.debug('[FlowMacro Replayer] XPath evaluation error:', xpathErr);
           }
         }
       }
@@ -232,7 +232,7 @@ import { decryptSecret } from '../shared/crypto';
       }
       return null;
     } catch (syntaxErr) {
-      console.warn(`[AutoMacro Replayer] Selector evaluation failed for "${target}":`, syntaxErr);
+      console.warn(`[FlowMacro Replayer] Selector evaluation failed for "${target}":`, syntaxErr);
       return null;
     }
   }
@@ -296,7 +296,7 @@ import { decryptSecret } from '../shared/crypto';
           characterData: true,
         });
       } catch (obsErr) {
-        console.warn('[AutoMacro Replayer] MutationObserver setup error:', obsErr);
+        console.warn('[FlowMacro Replayer] MutationObserver setup error:', obsErr);
         cleanup();
         resolve();
       }
@@ -329,7 +329,7 @@ import { decryptSecret } from '../shared/crypto';
           );
         } catch (e: any) {
           const decErr = `Failed to decrypt protected secret for target "${command.target}": ${e.message || String(e)}`;
-          console.error('[AutoMacro Replayer]', decErr);
+          console.error('[FlowMacro Replayer]', decErr);
           throw new Error(decErr);
         }
       }
@@ -419,7 +419,7 @@ import { decryptSecret } from '../shared/crypto';
           el.click();
         }
       } catch (fallbackClickErr) {
-        console.debug('[AutoMacro Replayer] Native element click fallback notice:', fallbackClickErr);
+        console.debug('[FlowMacro Replayer] Native element click fallback notice:', fallbackClickErr);
       }
     }
   }

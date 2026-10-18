@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Square, CircleDot, ArrowLeft, Plus } from 'lucide-react';
+import { Play, Square, CircleDot, ArrowLeft, Plus, ExternalLink } from 'lucide-react';
 import { ExecutionStatus } from '../../types/macro';
 
 interface HeaderProps {
@@ -28,17 +28,17 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         ) : (
           <div className="w-6 h-6 rounded-md overflow-hidden border border-emerald-500/30 bg-slate-900 flex items-center justify-center shrink-0">
-            <img src="/automacro_ide_symbol.png" alt="AutoMacro" className="w-full h-full object-cover" />
+            <img src="/automacro_ide_symbol.png" alt="FlowMacro" className="w-full h-full object-cover" />
           </div>
         )}
 
         <div className="truncate">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold tracking-tight text-zinc-100 truncate">
-              {selectedMacroTitle || 'AutoMacro'}
+              {selectedMacroTitle || 'FlowMacro'}
             </span>
             <span className="text-[10px] font-mono text-zinc-500 bg-zinc-900 px-1 py-0.5 rounded border border-zinc-800/60 hidden sm:inline">
-              v1.0
+              v1.0.3
             </span>
           </div>
         </div>
@@ -69,6 +69,15 @@ export const Header: React.FC<HeaderProps> = ({
             <span>New Macro</span>
           </button>
         )}
+
+        <button
+          onClick={() => chrome.runtime.sendMessage({ type: 'OPEN_IDE_WINDOW' })}
+          className="h-7 px-2 rounded bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white text-[11px] font-mono flex items-center gap-1 transition-colors border border-zinc-800"
+          title="Open Standalone FlowMacro IDE Window"
+        >
+          <ExternalLink className="w-3 h-3 text-emerald-400" />
+          <span className="hidden xs:inline">IDE</span>
+        </button>
       </div>
     </header>
   );

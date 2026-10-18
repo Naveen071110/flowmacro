@@ -13,8 +13,6 @@ async function createPackage() {
   const manifestData = JSON.parse(fs.readFileSync(rootManifest, 'utf-8'));
   const version = manifestData.version || '1.0.1';
   const zipPathVersioned = path.resolve(`flowmacro-extension-v${version}.zip`);
-  const zipPath = path.resolve('flowmacro-extension.zip');
-  const zipPathLegacy = path.resolve('automacro-extension.zip');
 
   const zip = new JSZip();
   const manifestLocations = [];
@@ -61,8 +59,6 @@ async function createPackage() {
   });
 
   fs.writeFileSync(zipPathVersioned, content);
-  fs.writeFileSync(zipPath, content);
-  fs.writeFileSync(zipPathLegacy, content);
   const sizeKb = (content.length / 1024).toFixed(1);
 
   console.log(`\n🎉 Success! Created: flowmacro-extension-v${version}.zip (${sizeKb} KB)`);

@@ -99,7 +99,7 @@ export default function DocsPage() {
                 FlowMacro Docs &amp; Reference
               </span>
               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                v1.0.2
+                v1.0.3
               </span>
             </div>
           </div>

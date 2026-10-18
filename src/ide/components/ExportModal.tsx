@@ -62,7 +62,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ suite, onClose }) => {
       case 'json':
         return {
           code: exportToJson(suite),
-          filename: `${slug}.automacro.json`,
+          filename: `${slug}.flowmacro.json`,
           language: 'json',
         };
     }
@@ -193,7 +193,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ suite, onClose }) => {
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              AutoMacro JSON
+              FlowMacro JSON
             </button>
           </div>
 

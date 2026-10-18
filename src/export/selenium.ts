@@ -116,7 +116,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 """
-AutoMacro Generated Selenium Python Script
+FlowMacro Generated Selenium Python Script
 Suite: ${suite.name || 'Test Suite'}
 Base URL: ${suite.baseUrl || 'https://example.com'}
 Generated: ${new Date().toISOString()}
@@ -129,7 +129,7 @@ def run_test():
 
     try:
 ${envHeader}${stepLines}
-        print("✅ AutoMacro execution completed successfully!")
+        print("✅ FlowMacro execution completed successfully!")
     finally:
         time.sleep(2)
         driver.quit()

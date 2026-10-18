@@ -182,7 +182,7 @@ if (chrome.runtime?.onInstalled) {
 // ============================================================================
 // EXTENSION ACTION -> LAUNCH STANDALONE IDE WINDOW (960x750)
 // ============================================================================
-chrome.action.onClicked.addListener(async () => {
+async function openIdeWindow() {
   await rehydrationPromise;
 
   if (ideWindowId !== null) {
@@ -193,7 +193,7 @@ chrome.action.onClicked.addListener(async () => {
         return;
       }
     } catch (winErr) {
-      console.debug('[AutoMacro] Previous IDE window closed or not found:', winErr);
+      console.debug('[FlowMacro] Previous IDE window closed or not found:', winErr);
       ideWindowId = null;
       ideTabId = null;
       await persistSession();
@@ -218,10 +218,14 @@ chrome.action.onClicked.addListener(async () => {
         ideTabId = tabs[0].id || null;
       }
     } catch (tabQueryErr) {
-      console.warn('[AutoMacro] Error querying tabs for IDE window:', tabQueryErr);
+      console.warn('[FlowMacro] Error querying tabs for IDE window:', tabQueryErr);
     }
   }
   await persistSession();
+}
+
+chrome.action.onClicked.addListener(async () => {
+  await openIdeWindow();
 });
 
 // Clean up references when windows are closed
@@ -333,13 +337,52 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
+function normalizeMacroToSuite(input: any): TestSuite {
+  if ('commands' in input && Array.isArray(input.commands)) {
+    return input;
+  }
+  return {
+    id: input.macroId || 'suite_' + Date.now(),
+    name: input.title || 'Workflow Macro',
+    baseUrl: input.baseUrl || 'https://example.com',
+    commands: (input.steps || []).map((s: any) => ({
+      id: s.id || 'cmd_' + Date.now(),
+      command: s.action || 'click',
+      target: s.selector || '',
+      targets: s.fallbackSelectors ? s.fallbackSelectors.map((f: string) => [f, 'css:finder']) : undefined,
+      value: s.value || '',
+      status: 'pending',
+      isSensitive: Boolean(s.isSensitive),
+      encryptedSecret: s.encryptedSecret,
+      envVarName: s.envVarName,
+    })),
+    createdAt: input.createdAt || Date.now(),
+    updatedAt: input.updatedAt || Date.now(),
+    variables: input.variables,
+  };
+}
+
 async function handleIncomingMessage(msg: any, _sender: chrome.runtime.MessageSender) {
   await rehydrationPromise;
   const actionType = msg.type || msg.action;
 
   switch (actionType) {
+    case 'OPEN_IDE_WINDOW': {
+      await openIdeWindow();
+      return { status: 'ide_opened' };
+    }
+
     case 'START_RECORDING': {
-      return await startRecordingFlow(msg.baseUrl, msg.suiteId);
+      let baseUrl = msg.baseUrl;
+      if (!baseUrl) {
+        try {
+          const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (activeTab?.url && activeTab.url.startsWith('http')) {
+            baseUrl = activeTab.url;
+          }
+        } catch (_) {}
+      }
+      return await startRecordingFlow(baseUrl, msg.suiteId || msg.macroId || 'suite_' + Date.now());
     }
 
     case 'PAUSE_RECORDING': {
@@ -385,8 +428,12 @@ async function handleIncomingMessage(msg: any, _sender: chrome.runtime.MessageSe
     }
 
     case 'START_REPLAY': {
-      startReplayProcess(msg.suite, msg.speed || 1, msg.startFromIndex || 0);
-      return { status: 'replay_started' };
+      const suiteToRun = msg.suite || (msg.macro ? normalizeMacroToSuite(msg.macro) : null);
+      if (suiteToRun) {
+        startReplayProcess(suiteToRun, msg.speed || 1, msg.startFromIndex || 0);
+        return { status: 'replay_started' };
+      }
+      return { status: 'error', message: 'No suite or macro provided' };
     }
 
     case 'PAUSE_REPLAY': {
@@ -412,6 +459,7 @@ async function handleIncomingMessage(msg: any, _sender: chrome.runtime.MessageSe
       return { status: 'stopped' };
     }
 
+    case 'GET_REPLAY_STATE':
     case 'GET_SESSION_STATE': {
       return sessionState;
     }
@@ -654,7 +702,7 @@ async function startReplayProcess(
     // Focus target window
     if (targetWindowId) {
       chrome.windows.update(targetWindowId, { focused: true }).catch((err) => {
-        console.debug('[AutoMacro] Target window focus notice:', err);
+        console.debug('[FlowMacro] Target window focus notice:', err);
       });
     }
   }
@@ -831,7 +879,7 @@ async function executeDomCommand(
       await waitForTabComplete(tabId, 6000);
     }
   } catch (tabErr: any) {
-    console.debug(`[AutoMacro] Target tab get status check notice:`, tabErr);
+    console.debug(`[FlowMacro] Target tab get status check notice:`, tabErr);
   }
 
   // Attempt 1
@@ -873,7 +921,7 @@ async function waitForTabComplete(tabId: number, maxWaitMs: number = 8000): Prom
       return;
     }
   } catch (tabErr: any) {
-    console.debug(`[AutoMacro] Tab get completion check notice (tabId ${tabId}):`, tabErr);
+    console.debug(`[FlowMacro] Tab get completion check notice (tabId ${tabId}):`, tabErr);
   }
 
   return new Promise((resolve) => {
@@ -917,13 +965,16 @@ function addLog(message: string, type: 'info' | 'warn' | 'error' | 'success', st
 function sendToIde(message: any) {
   if (ideTabId) {
     chrome.tabs.sendMessage(ideTabId, message).catch((err) => {
-      console.debug('[AutoMacro] Notice: IDE tab message not received:', err);
+      console.debug('[FlowMacro] Notice: IDE tab message not received:', err);
     });
   }
   // Also runtime broadcast
   chrome.runtime.sendMessage(message).catch((err) => {
-    console.debug('[AutoMacro] Notice: Runtime broadcast not received:', err);
+    console.debug('[FlowMacro] Notice: Runtime broadcast not received:', err);
   });
+  if (message.type === 'SESSION_STATE_UPDATE') {
+    chrome.runtime.sendMessage({ type: 'REPLAY_STATE_UPDATE', state: message.state }).catch(() => {});
+  }
 }
 
 async function ensureScriptInjected(tabId: number, scriptPath: string) {
