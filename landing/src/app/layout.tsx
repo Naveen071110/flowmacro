@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { PostHogProvider } from "./providers";
+import { Analytics } from "@vercel/analytics/react";
 
 export const viewport: Viewport = {
   themeColor: "#0b0f17",
@@ -117,6 +118,7 @@ export default function RootLayout({
       </head>
       <body className="bg-[#0b0f17] text-slate-200 antialiased selection:bg-emerald-500/20 selection:text-emerald-300">
         <PostHogProvider>{children}</PostHogProvider>
+        <Analytics />
       </body>
     </html>
   );
