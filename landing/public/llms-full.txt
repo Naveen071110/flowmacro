@@ -1,0 +1,121 @@
+# FlowMacro — Complete Technical Knowledge Base & Architectural Reference
+
+> This document provides the complete, untruncated technical documentation and architectural reference for FlowMacro — the zero-trust browser automation and Selenium IDE engine built natively on Google Chrome Manifest V3.
+
+---
+
+## 1. System Overview
+
+FlowMacro is a client-side Chrome extension (Chromium MV3) that provides a standalone desktop controller window to record user browser interactions, automatically mask and encrypt passwords with local AES-256-GCM cryptography, replay test steps across multiple tabs and navigations using a 5-tier selector waterfall, and export tests to Playwright (TypeScript/JavaScript), Puppeteer, Python Selenium, or Selenium IDE (.side JSON) format.
+
+- **Developer**: Naveen Guru
+- **Architecture**: Google Chrome Manifest V3
+- **Local Storage**: `chrome.storage.local` and `chrome.storage.session`
+- **Zero Cloud Footprint**: Operates 100% in the user's browser without external API servers, telemetry tracking, or cloud databases.
+
+---
+
+## 2. Why Selenium IDE Failed on Chrome & How FlowMacro Solves It
+
+### The Fall of Selenium IDE
+1. **Manifest V2 Deprecation**: In 2024–2025, Google systematically disabled and removed Manifest V2 extensions from the Chrome Web Store.
+2. **Reliance on Unsafe Eval**: Selenium IDE relied on dynamic code evaluation (`eval()`, `new Function()`) inside the extension context, which is strictly prohibited under Manifest V3 Content Security Policy (`script-src 'self'`).
+3. **Persistent Background Termination**: Selenium IDE assumed background scripts ran forever in memory. MV3 Service Workers are terminated after 30 seconds of inactivity, breaking Selenium IDE's execution state machine.
+4. **Brittle Locators**: Selenium IDE generated brittle absolute XPaths (`/html/body/div[2]/...`) that broke whenever a developer changed CSS or added a wrapper `<div>`.
+5. **Plaintext Password Exposure**: Passwords entered during recording were captured as plaintext strings in the `.side` JSON file, leaking credentials into source control.
+
+### How FlowMacro Solves Each Problem
+1. **Native Manifest V3**: Built from day one for MV3 Service Workers and modern Chromium security sandboxes.
+2. **Sandboxed Evaluation & Main World Injection**: Safely evaluates dynamic expressions via sandboxed iframes (`sandbox.html` with `allow-scripts`) and executes DOM scripts via `chrome.scripting.executeScript` in `world: 'MAIN'`.
+3. **Standalone Controller Window**: FlowMacro's IDE is a dedicated, visible desktop window (`ide.html`). Browser windows are never terminated by Chrome's lifecycle, keeping execution queues and variable states continuously in memory.
+4. **5-Tier Selector Waterfall**: Captures 5 fallback locators per step (`data-testid` -> ID -> ARIA -> CSS -> XPath). If UI changes break Tier 1, FlowMacro automatically falls back to Tier 2, 3, 4, or 5 in real time.
+5. **Local AES-256-GCM Vault**: Credentials entered into password fields are detected, masked in the UI (`••••••••`), and encrypted locally with AES-256-GCM using Web Crypto API. Exported scripts reference environment variables (`process.env.AUTO_MACRO_PASSWORD`) rather than raw secrets.
+
+---
+
+## 3. The 5-Tier Selector Waterfall Specification
+
+When a user interacts with an element during recording, FlowMacro's content script inspects the DOM and captures five prioritized selector tiers:
+
+- **Tier 1 (Test ID - 100% Stability)**:
+  Extracts `data-testid`, `data-test`, `data-cy`, or `data-qa`. Completely immune to layout refactoring and CSS renaming.
+- **Tier 2 (Semantic ID / Form Name - 90% Stability)**:
+  Extracts element `id` (checking for and discarding auto-generated or randomized dynamic hashes) or `name` attribute.
+- **Tier 3 (ARIA & Accessibility - 85% Stability)**:
+  Extracts `role`, `aria-label`, and accessible user-visible text. Mimics human perception and remains stable through visual restyling.
+- **Tier 4 (Optimized Semantic CSS - 65% Stability)**:
+  Filters out atomic utility classes (Tailwind, CSS-in-JS hashes) and constructs a clean, minimal semantic class path.
+- **Tier 5 (Relative Semantic XPath - 60% Stability)**:
+  Constructs a relative semantic XPath (e.g. `//button[normalize-space()='Submit']`) rather than a fragile absolute path (`/html/body/div...`).
+
+---
+
+## 4. Code Generation & Exporter Engine
+
+FlowMacro features native transpilers that convert recorded macro commands into production-grade automation code:
+
+### Playwright (TypeScript)
+```typescript
+import { test, expect } from '@playwright/test';
+
+test('Automated Checkout Flow', async ({ page }) => {
+  // Step 1: Navigate
+  await page.goto('https://example.com/checkout');
+  await page.waitForLoadState('domcontentloaded');
+
+  // Step 2: Fill input with masked credential
+  const AUTO_MACRO_PASSWORD = process.env.AUTO_MACRO_PASSWORD || '';
+  await page.locator('[data-testid="user-password"]').fill(AUTO_MACRO_PASSWORD);
+
+  // Step 3: Click Submit with auto-wait
+  await page.locator('[data-testid="submit-btn"]').click();
+});
+```
+
+### Python Selenium WebDriver
+```python
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import os
+
+driver = webdriver.Chrome()
+wait = WebDriverWait(driver, 10)
+try:
+    driver.get("https://example.com/checkout")
+    elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[data-testid='user-password']")))
+    elem.send_keys(os.getenv("AUTO_MACRO_PASSWORD", ""))
+    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-testid='submit-btn']"))).click()
+finally:
+    driver.quit()
+```
+
+### Selenium IDE (.side JSON)
+Exports standard 2.0 `.side` JSON project files compatible with legacy tools and CLI runners (`selenium-side-runner`).
+
+---
+
+## 5. Free Online Developer Tools
+
+FlowMacro provides zero-cost, 100% client-side developer utilities directly on its website:
+1. **Selenium IDE (.side) to Playwright / Python Converter** (`https://flowmacro.vercel.app/tools/side-to-playwright`):
+   Drag-and-drop legacy `.side` files to generate modern Playwright (TypeScript/Python) or Python Selenium code.
+2. **5-Tier Selector Waterfall Generator** (`https://flowmacro.vercel.app/tools/selector-generator`):
+   Paste any HTML element to compute all 5 resilient locator tiers and receive an automation flakiness risk score.
+
+---
+
+## 6. Frequently Asked Questions (FAQ)
+
+### Q: Is FlowMacro completely free?
+Yes. FlowMacro is 100% free to install from the Chrome Web Store. All core recording, replaying, password encryption, and multi-framework code export features are free.
+
+### Q: Does FlowMacro send recorded data to any server?
+No. FlowMacro operates entirely within the user's local browser environment using Chrome's local storage and the native Web Crypto API. No analytics, telemetry, or user credentials ever leave your machine.
+
+### Q: Can FlowMacro open and edit old Selenium IDE .side files?
+Yes. FlowMacro includes full `.side` file import and export parity. You can drag and drop existing `.side` files into FlowMacro to view, replay, or export them into Playwright or Python.
+
+### Q: How does FlowMacro handle Single Page Applications (SPAs) and redirects?
+FlowMacro's standalone controller window runs outside the target tab and attaches navigation event listeners to track multi-page flows, OAuth redirects, and client-side route changes without losing recording context.

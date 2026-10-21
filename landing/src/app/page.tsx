@@ -1039,6 +1039,84 @@ WebDriverWait(driver, 10).until(
         </div>
       </section>
 
+      {/* 6.5 FAQ SECTION (AEO & AI Search Optimized) */}
+      <section className="py-20 px-6 max-w-7xl mx-auto border-t border-slate-800/80">
+        <div className="max-w-3xl mx-auto text-center space-y-4 mb-14">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>Frequently Asked Questions</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+            Everything You Need to Know About FlowMacro
+          </h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Direct, factual answers regarding Manifest V3 compliance, password encryption, Selenium IDE migration, and multi-framework code export.
+          </p>
+        </div>
+
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-6 rounded-xl border border-slate-800 bg-[#0d131f] space-y-3">
+            <h3 className="text-white font-bold text-sm font-mono flex items-start gap-2">
+              <span className="text-emerald-400 shrink-0">01.</span>
+              <span>What makes FlowMacro the modern successor to Selenium IDE?</span>
+            </h3>
+            <p className="text-xs text-slate-400 font-mono leading-relaxed">
+              Selenium IDE was removed from the Chrome Web Store because of Google&apos;s Manifest V2 deprecation and banned unsafe eval scripts. FlowMacro is built natively on Manifest V3, features full .side file import/export parity, captures a 5-tier selector waterfall to eliminate brittle locators, and exports clean Playwright/Python code.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-xl border border-slate-800 bg-[#0d131f] space-y-3">
+            <h3 className="text-white font-bold text-sm font-mono flex items-start gap-2">
+              <span className="text-emerald-400 shrink-0">02.</span>
+              <span>How does the 5-Tier Selector Waterfall prevent flaky tests?</span>
+            </h3>
+            <p className="text-xs text-slate-400 font-mono leading-relaxed">
+              Unlike legacy recorders that save a single fragile XPath, FlowMacro captures five alternative locators per step: 1) data-testid, 2) Semantic ID/Name, 3) ARIA labels, 4) Optimized CSS, and 5) Relative XPath. If styling changes break Tier 1, playback automatically falls back to the next tier without crashing.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-xl border border-slate-800 bg-[#0d131f] space-y-3">
+            <h3 className="text-white font-bold text-sm font-mono flex items-start gap-2">
+              <span className="text-emerald-400 shrink-0">03.</span>
+              <span>How does local AES-256-GCM encryption stop password leaks?</span>
+            </h3>
+            <p className="text-xs text-slate-400 font-mono leading-relaxed">
+              When typing into password fields, FlowMacro masks the keystrokes (••••••••) and encrypts them locally using the Web Crypto API. Exported Playwright, Puppeteer, and Selenium scripts automatically reference environment variables (e.g. process.env.AUTO_MACRO_PASSWORD) rather than hardcoded credentials.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-xl border border-slate-800 bg-[#0d131f] space-y-3">
+            <h3 className="text-white font-bold text-sm font-mono flex items-start gap-2">
+              <span className="text-emerald-400 shrink-0">04.</span>
+              <span>Can I convert my existing Selenium IDE (.side) suites?</span>
+            </h3>
+            <p className="text-xs text-slate-400 font-mono leading-relaxed">
+              Yes! You can drag and drop your legacy .side project files directly into FlowMacro&apos;s IDE to replay them in Chrome, or use our free online converter at /tools/side-to-playwright to transpile tests into modern Playwright TypeScript or Python in seconds.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-xl border border-slate-800 bg-[#0d131f] space-y-3">
+            <h3 className="text-white font-bold text-sm font-mono flex items-start gap-2">
+              <span className="text-emerald-400 shrink-0">05.</span>
+              <span>Does FlowMacro require a cloud backend or account?</span>
+            </h3>
+            <p className="text-xs text-slate-400 font-mono leading-relaxed">
+              Zero backend. FlowMacro operates 100% locally inside your Chrome browser using chrome.storage.local. No test steps, DOM coordinates, cookies, or secrets are ever transmitted to any external server.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-xl border border-slate-800 bg-[#0d131f] space-y-3">
+            <h3 className="text-white font-bold text-sm font-mono flex items-start gap-2">
+              <span className="text-emerald-400 shrink-0">06.</span>
+              <span>Which automation frameworks are supported for code export?</span>
+            </h3>
+            <p className="text-xs text-slate-400 font-mono leading-relaxed">
+              FlowMacro exports clean, ready-to-run code for Playwright (TypeScript and JavaScript), Python Selenium WebDriver, Puppeteer (Node.js), and official Selenium IDE (.side JSON).
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* 7. FOOTER */}
       <footer className="border-t border-slate-800/80 bg-[#090d14] py-12 px-6 text-xs font-mono text-slate-500">
         <div className="max-w-7xl mx-auto space-y-8">

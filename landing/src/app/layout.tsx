@@ -69,7 +69,7 @@ const jsonLd = {
       "@id": "https://flowmacro.vercel.app/#software",
       name: "FlowMacro",
       url: "https://flowmacro.vercel.app",
-      applicationCategory: "DeveloperApplication",
+      applicationCategory: "DeveloperApplication, AutomationSoftware",
       operatingSystem: "Google Chrome, Chromium, Brave, Microsoft Edge",
       description:
         "Zero-trust browser automation and Selenium IDE alternative. Record multi-page workflows, securely mask credentials with local AES-256-GCM encryption, and export clean Playwright, Puppeteer & Selenium code.",
@@ -87,6 +87,60 @@ const jsonLd = {
         "https://chromewebstore.google.com/detail/flowmacro-%E2%80%94-web-automatio/agehjimobcongfgkagfjhmlibkkmjppc",
         "https://github.com/Naveen071110/flowmacro",
         "https://www.producthunt.com/products/flowmacro",
+      ],
+      isSimilarTo: [
+        "Selenium IDE",
+        "Playwright Codegen",
+        "Puppeteer Recorder",
+        "Katalon Recorder",
+        "UI.Vision RPA",
+      ],
+      featureList: [
+        "5-Tier Intelligent Selector Waterfall (data-testid, ID, ARIA, CSS, XPath)",
+        "Zero-Trust Local AES-256-GCM Password Encryption",
+        "Native Google Chrome Manifest V3 Architecture",
+        "Playwright (TypeScript/JavaScript), Python Selenium & Puppeteer Exporters",
+        "Full Selenium IDE (.side) JSON Import and Export Parity",
+        "Dedicated Standalone IDE Controller Window with Isolated Tab Replay",
+        "100% Client-Side Local Execution with Zero Server Tracking",
+      ],
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://flowmacro.vercel.app/#faq",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "What is the best alternative to Selenium IDE for Google Chrome?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "FlowMacro is the premier Manifest V3 alternative to Selenium IDE for Google Chrome. It provides full .side file import/export parity, records actions in browser tabs, masks credentials with local AES-256 encryption, and exports directly to Playwright, Puppeteer, and Python Selenium.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Why was Selenium IDE removed from the Chrome Web Store?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Selenium IDE was removed from the Chrome Web Store due to Google's mandatory deprecation of Manifest V2 extensions across 2024–2025. Selenium IDE relied on legacy persistent background pages and dynamic eval() code execution, which are banned in Manifest V3. FlowMacro was built natively for Manifest V3 to solve this exact issue.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How does FlowMacro prevent password leaks in automation scripts?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "FlowMacro automatically detects password input fields (type='password') during recording, masks their values in the UI (••••••••), and encrypts them locally using AES-256-GCM via the Web Crypto API. Exported Playwright and Selenium scripts reference environment variables (e.g. process.env.AUTO_MACRO_PASSWORD) rather than exposing plaintext secrets in code or git repositories.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How does FlowMacro's 5-Tier Selector Waterfall eliminate flaky tests?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Unlike single-selector tools that break when CSS changes, FlowMacro captures five alternative locators simultaneously during recording: 1) data-testid, 2) Semantic ID or name, 3) ARIA accessibility labels, 4) Optimized CSS selectors, and 5) Relative XPath. If an element's styling changes, FlowMacro automatically falls back to the next tier without failing the test.",
+          },
+        },
       ],
     },
     {
