@@ -1040,41 +1040,88 @@ WebDriverWait(driver, 10).until(
       </section>
 
       {/* 7. FOOTER */}
-      <footer className="border-t border-slate-800/80 bg-[#090d14] py-10 px-6 text-xs font-mono text-slate-500">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5 text-slate-400">
-            <Image
-              src="/flowmacro_store_icon_128x128.png"
-              alt="FlowMacro IDE Logo"
-              width={20}
-              height={20}
-              className="rounded"
-            />
-            <span className="text-white font-bold">FlowMacro IDE</span>
-            <span>• Local Manifest V3 Automation Engine</span>
+      <footer className="border-t border-slate-800/80 bg-[#090d14] py-12 px-6 text-xs font-mono text-slate-500">
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-slate-800/60">
+            {/* Col 1: Brand */}
+            <div className="space-y-3 md:col-span-2">
+              <div className="flex items-center gap-2.5 text-slate-300">
+                <Image
+                  src="/flowmacro_store_icon_128x128.png"
+                  alt="FlowMacro IDE Logo"
+                  width={24}
+                  height={24}
+                  className="rounded"
+                />
+                <span className="text-white font-bold text-sm tracking-tight">FlowMacro</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px]">
+                  Manifest V3
+                </span>
+              </div>
+              <p className="text-slate-400 text-xs max-w-sm leading-relaxed">
+                Zero-trust browser automation and Selenium IDE engine. Record workflows, mask credentials locally with AES-256 encryption, and export clean Playwright code.
+              </p>
+            </div>
+
+            {/* Col 2: Free Tools */}
+            <div className="space-y-3">
+              <span className="text-white font-semibold text-xs tracking-wider uppercase text-slate-300">
+                Free Developer Tools
+              </span>
+              <ul className="space-y-2 text-slate-400">
+                <li>
+                  <Link href="/tools/side-to-playwright" className="hover:text-emerald-400 transition-colors">
+                    .side to Playwright Converter
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/tools/selector-generator" className="hover:text-emerald-400 transition-colors">
+                    5-Tier Selector Waterfall
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 3: Resources */}
+            <div className="space-y-3">
+              <span className="text-white font-semibold text-xs tracking-wider uppercase text-slate-300">
+                Resources
+              </span>
+              <ul className="space-y-2 text-slate-400">
+                <li>
+                  <Link href="/docs" className="hover:text-emerald-400 transition-colors">
+                    Docs &amp; Help
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
+                    Privacy Policy (Zero Data)
+                  </Link>
+                </li>
+                <li>
+                  <a
+                    href="mailto:contact@naveensingh.guru"
+                    className="hover:text-emerald-400 transition-colors"
+                  >
+                    Support: contact@naveensingh.guru
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://github.com/Naveen071110/flowmacro"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-emerald-400 transition-colors"
+                  >
+                    GitHub Repository
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-6">
-            <Link href="/docs" className="hover:text-emerald-400 transition-colors">
-              Docs &amp; Help
-            </Link>
-            <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
-              Privacy Policy (Zero Data)
-            </Link>
-            <a
-              href="mailto:contact@naveensingh.guru"
-              className="hover:text-emerald-400 transition-colors"
-            >
-              Support: contact@naveensingh.guru
-            </a>
-            <a
-              href="https://github.com/Naveen071110/flowmacro"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-emerald-400 transition-colors"
-            >
-              GitHub
-            </a>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[11px]">
+            <span>© {new Date().getFullYear()} FlowMacro. 100% Client-Side Local Execution.</span>
             <span>Built by Naveen Guru</span>
           </div>
         </div>
