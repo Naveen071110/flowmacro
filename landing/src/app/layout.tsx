@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { PostHogProvider } from "./providers";
 import { Analytics } from "@vercel/analytics/react";
+import { CookieBanner } from "./components/CookieBanner";
 
 export const viewport: Viewport = {
   themeColor: "#0b0f17",
@@ -40,10 +41,10 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/flowmacro_store_icon_128x128.png",
-        width: 128,
-        height: 128,
-        alt: "FlowMacro Logo",
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "FlowMacro — Zero-Trust Browser Automation & Selenium IDE",
       },
     ],
   },
@@ -52,7 +53,7 @@ export const metadata: Metadata = {
     title: "FlowMacro — Zero-Trust Browser Automation & Selenium IDE",
     description:
       "Record web actions, mask passwords with local AES-256 encryption, replay in isolated tabs, and export clean Playwright & Selenium scripts.",
-    images: ["/flowmacro_store_icon_128x128.png"],
+    images: ["/opengraph-image"],
   },
   icons: {
     icon: "/flowmacro_store_icon_128x128.png",
@@ -173,6 +174,7 @@ export default function RootLayout({
       <body className="bg-[#0b0f17] text-slate-200 antialiased selection:bg-emerald-500/20 selection:text-emerald-300">
         <PostHogProvider>{children}</PostHogProvider>
         <Analytics />
+        <CookieBanner />
       </body>
     </html>
   );

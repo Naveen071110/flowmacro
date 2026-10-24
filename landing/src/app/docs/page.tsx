@@ -893,10 +893,10 @@ jobs:
               </ul>
             </div>
 
-            {/* Col 3: Resources */}
+            {/* Col 3: Resources & Legal */}
             <div className="space-y-3">
               <span className="text-white font-semibold text-xs tracking-wider uppercase text-slate-300">
-                Resources
+                Resources &amp; Legal
               </span>
               <ul className="space-y-2 text-slate-400">
                 <li>
@@ -905,8 +905,18 @@ jobs:
                   </Link>
                 </li>
                 <li>
+                  <Link href="/terms" className="hover:text-emerald-400 transition-colors">
+                    Terms &amp; Conditions
+                  </Link>
+                </li>
+                <li>
                   <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
                     Privacy Policy (Zero Data)
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/thank-you" className="hover:text-emerald-400 transition-colors">
+                    Quickstart Guide
                   </Link>
                 </li>
                 <li>
@@ -931,9 +941,13 @@ jobs:
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[11px]">
-            <span>© {new Date().getFullYear()} FlowMacro. 100% Client-Side Local Execution.</span>
-            <span>Built by Naveen Guru</span>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[11px] pt-4">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+              <span>© {new Date().getFullYear()} FlowMacro. 100% Client-Side Local Execution.</span>
+              <span className="hidden sm:inline">•</span>
+              <span>New Delhi, India</span>
+            </div>
+            <span>Built by Naveen Guru • contact@naveensingh.guru</span>
           </div>
         </div>
       </footer>

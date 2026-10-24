@@ -640,6 +640,21 @@ export default function SideToPlaywrightConverter() {
           </div>
         </section>
       </main>
+
+      <footer className="border-t border-slate-800/80 bg-[#090d14] py-8 px-6 text-xs font-mono text-slate-500">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="hover:text-emerald-400 transition-colors">Home</Link>
+            <span>•</span>
+            <Link href="/docs" className="hover:text-emerald-400 transition-colors">Docs</Link>
+            <span>•</span>
+            <Link href="/privacy" className="hover:text-emerald-400 transition-colors">Privacy</Link>
+            <span>•</span>
+            <Link href="/terms" className="hover:text-emerald-400 transition-colors">Terms</Link>
+          </div>
+          <span>© {new Date().getFullYear()} FlowMacro IDE • Naveen Guru • New Delhi, India</span>
+        </div>
+      </footer>
     </div>
   );
 }

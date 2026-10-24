@@ -163,21 +163,23 @@ export default function PrivacyPolicy() {
           <section className="space-y-2">
             <h2 className="text-sm font-semibold text-white flex items-center gap-2">
               <span className="text-emerald-400 font-mono">05.</span>
-              Contact &amp; Inquiries
+              Contact, Operator &amp; Physical Location
             </h2>
             <p className="text-slate-400">
-              If you have any questions or security inquiries regarding FlowMacro, please contact:
+              FlowMacro is engineered and operated by Naveen Guru, based in New Delhi, India. If you have any privacy questions, security audit requests, or zero-trust data inquiries:
             </p>
-            <p className="text-emerald-400">
-              naveen@flowmacro.dev
-            </p>
+            <div className="space-y-1 text-slate-300 pt-1">
+              <div><strong className="text-slate-200">Developer &amp; Operator:</strong> Naveen Guru</div>
+              <div><strong className="text-slate-200">Location:</strong> New Delhi, India</div>
+              <div><strong className="text-slate-200">Direct Contact:</strong> <a href="mailto:contact@naveensingh.guru" className="text-emerald-400 hover:underline">contact@naveensingh.guru</a></div>
+            </div>
           </section>
         </div>
       </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 py-8 text-center text-xs font-mono text-slate-500 bg-[#090d14]">
-        FlowMacro IDE • Local Manifest V3 Automation Engine • Built by Naveen Guru
+        FlowMacro IDE • Local Manifest V3 Automation Engine • Built by Naveen Guru • New Delhi, India
       </footer>
     </div>
   );

@@ -1118,7 +1118,7 @@ WebDriverWait(driver, 10).until(
       </section>
 
       {/* 7. FOOTER */}
-      <footer className="border-t border-slate-800/80 bg-[#090d14] py-12 px-6 text-xs font-mono text-slate-500">
+      <footer className="border-t border-slate-800/80 bg-[#090d14] pt-12 pb-24 md:pb-12 px-6 text-xs font-mono text-slate-500">
         <div className="max-w-7xl mx-auto space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8 border-b border-slate-800/60">
             {/* Col 1: Brand */}
@@ -1160,10 +1160,10 @@ WebDriverWait(driver, 10).until(
               </ul>
             </div>
 
-            {/* Col 3: Resources */}
+            {/* Col 3: Resources & Legal */}
             <div className="space-y-3">
               <span className="text-white font-semibold text-xs tracking-wider uppercase text-slate-300">
-                Resources
+                Resources &amp; Legal
               </span>
               <ul className="space-y-2 text-slate-400">
                 <li>
@@ -1172,8 +1172,18 @@ WebDriverWait(driver, 10).until(
                   </Link>
                 </li>
                 <li>
+                  <Link href="/terms" className="hover:text-emerald-400 transition-colors">
+                    Terms &amp; Conditions
+                  </Link>
+                </li>
+                <li>
                   <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
                     Privacy Policy (Zero Data)
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/thank-you" className="hover:text-emerald-400 transition-colors">
+                    Quickstart Guide
                   </Link>
                 </li>
                 <li>
@@ -1198,12 +1208,41 @@ WebDriverWait(driver, 10).until(
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[11px]">
-            <span>© {new Date().getFullYear()} FlowMacro. 100% Client-Side Local Execution.</span>
-            <span>Built by Naveen Guru</span>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[11px] pt-4">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+              <span>© {new Date().getFullYear()} FlowMacro. 100% Client-Side Local Execution.</span>
+              <span className="hidden sm:inline">•</span>
+              <span>New Delhi, India</span>
+            </div>
+            <span>Built by Naveen Guru • contact@naveensingh.guru</span>
           </div>
         </div>
       </footer>
+
+      {/* Sticky Mobile CTA (Items 10 & 11) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 p-3 bg-[#090d14]/95 backdrop-blur-md border-t border-slate-800/90 flex items-center justify-between gap-3 shadow-[0_-8px_24px_rgba(0,0,0,0.5)]">
+        <div className="flex items-center gap-2 min-w-0">
+          <Image
+            src="/flowmacro_store_icon_128x128.png"
+            alt="FlowMacro Logo"
+            width={28}
+            height={28}
+            className="rounded shrink-0"
+          />
+          <div className="min-w-0">
+            <div className="text-white text-xs font-bold font-mono truncate">FlowMacro IDE</div>
+            <div className="text-[10px] text-emerald-400 font-mono">Free • Manifest V3</div>
+          </div>
+        </div>
+        <a
+          href="https://chromewebstore.google.com/detail/flowmacro-%E2%80%94-web-automatio/agehjimobcongfgkagfjhmlibkkmjppc"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold font-mono text-xs transition-colors shrink-0 shadow-sm flex items-center gap-1.5"
+        >
+          <span>Add to Chrome</span>
+        </a>
+      </div>
     </div>
   );
 }
